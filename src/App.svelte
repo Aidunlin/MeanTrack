@@ -19,11 +19,9 @@
     getDoc,
     onSnapshot,
     collection,
-    query,
-    where,
-    getDocs,
     FirestoreDataConverter,
     CollectionReference,
+    Timestamp,
   } from "firebase/firestore";
 
   const firebaseConfig: FirebaseOptions = {
@@ -36,23 +34,25 @@
   };
 
   interface UserData {
+    hours: number;
+    lastAction: Timestamp;
     team: number;
-    hours: number;
-  }
-
-  interface TeamData {
-    hours: number;
-    members: number;
+    tracking: boolean;
   }
 
   const userDataConverter: FirestoreDataConverter<UserData> = {
     toFirestore: (data: UserData) => {
-      return { team: data.team, hours: data.hours };
+      return { ...data };
     },
 
     fromFirestore: (snapshot, options): UserData => {
       const data = snapshot.data(options);
-      return { team: data.team, hours: data.hours };
+      return {
+        hours: data.hours,
+        lastAction: data.lastAction,
+        team: data.team,
+        tracking: data.tracking,
+      };
     },
   };
 
@@ -60,14 +60,17 @@
   let auth: Auth;
   let firestore: Firestore;
 
+  let userData: UserData = {
+    hours: 0,
+    lastAction: new Timestamp(0, 0),
+    team: 0,
+    tracking: false,
+  };
   let userAccount: User;
-  let userData: UserData = { team: 0, hours: 0 };
   let userDocument: DocumentReference<UserData>;
   let unsubUserDoc: Unsubscribe;
 
-  let teamData: TeamData = { hours: 0, members: 0 };
   let usersCollection: CollectionReference;
-  let queriedTeamData = false;
 
   function load() {
     firebaseApp = initializeApp(firebaseConfig);
@@ -85,10 +88,15 @@
           userDataConverter
         );
 
-        unsubUserDoc = onSnapshot(
-          userDocument,
-          (doc) => (userData = doc.data())
-        );
+        unsubUserDoc = onSnapshot(userDocument, (doc) => {
+          Object.entries(doc.data()).forEach(data => {
+            if (userData.hasOwnProperty(data[0])) {
+              if (typeof data[1] == typeof userData[data[0]]) {
+                userData[data[0]] = data[1];
+              }
+            }
+          });
+        });
 
         getDoc(userDocument)
           .then((doc) => {
@@ -109,32 +117,26 @@
     signOut(auth)
       .then(() => {
         unsubUserDoc();
-        queriedTeamData = false;
       })
       .catch(console.log);
   }
 
   function changeTeam() {
     userData.team = parseInt(prompt("Enter your team's number"));
-    setDoc(userDocument, userData);
-    queriedTeamData = false;
+    setDoc(userDocument, userData).catch(console.log);
   }
 
-  function getTeamHours() {
-    queriedTeamData = false;
-    teamData.hours = 0;
-    teamData.members = 0;
+  function toggleTracking() {
+    let newAction = Timestamp.now();
+    let difference = newAction.toMillis() - userData.lastAction.toMillis();
 
-    getDocs(query(usersCollection, where("team", "==", userData.team)))
-      .then((querySnapShot) => {
-        querySnapShot.forEach((doc) => {
-          teamData.hours += doc.data().hours;
-          teamData.members++;
-        });
+    if (userData.tracking) {
+      userData.hours += difference / 1000 / 3600;
+    }
 
-        queriedTeamData = true;
-      })
-      .catch(console.log);
+    userData.tracking = !userData.tracking;
+    userData.lastAction = newAction;
+    setDoc(userDocument, userData).catch(console.log);
   }
 </script>
 
@@ -147,11 +149,15 @@
 {:else}
   <button on:click={logout}>Logout</button>
   <button on:click={changeTeam}>Change Team</button>
-  <p>Welcome, {userAccount.displayName}, Team {userData.team}</p>
-  <p>Total hours: {userData.hours}</p>
-  <button on:click={getTeamHours}>Team Stats</button>
-  {#if queriedTeamData}
-    <p>Total team hours: {teamData.hours}</p>
-    <p>Total team members: {teamData.members}</p>
-  {/if}
+  <p>Welcome, {userAccount.displayName} (Team {userData.team})</p>
+  <p>Hours: {userData.hours.toFixed(2)}</p>
+  <p>
+    {userData.tracking ? "Started" : "Stopped"} tracking on
+    {userData.lastAction
+      .toDate()
+      .toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
+  </p>
+  <button on:click={toggleTracking}>
+    {userData.tracking ? "Stop" : "Start"} tracking
+  </button>
 {/if}
