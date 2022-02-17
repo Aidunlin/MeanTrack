@@ -1,7 +1,133 @@
-* {
-  font-family: monospace;
+html {
+  --bg-color: #000;
+  --fg-color: rgba(127, 127, 127, 0.2);
+  --text-color: #fff;
+  --theme-color: #8bc34a;
+  background: var(--bg-color);
+  color-scheme: dark;
+  margin: auto;
+  max-width: 512px;
+  touch-action: pan-y;
 }
 
-html {
-  color-scheme: dark;
+body * {
+  border-radius: 0 !important;
+  border: none;
+  box-sizing: border-box;
+  color: var(--text-color);
+  font-family: monospace;
+  font-size: 24px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-height: 100vh;
+}
+
+button, input, select, option, path, #title {
+  color: var(--theme-color);
+}
+
+button, input, select, .number, .bg {
+  background: var(--fg-color);
+}
+
+button, input, select, .number, .padding {
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+input, select {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+}
+
+select {
+  cursor: pointer;
+}
+
+svg, #logo {
+  height: 30px;
+  vertical-align: bottom;
+}
+
+.flex {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.space-between {
+  justify-content: space-between;
+}
+
+.spaced {
+  gap: 8px;
+  padding: 8px;
+}
+
+.spaced > *, .flex button:only-child {
+  width: 100% !important;
+}
+
+.spaced .flex > * {
+  flex: auto;
+}
+
+.extend-down {
+  margin-top: auto;
+}
+
+.hide {
+  display: none !important;
+}
+
+.group, .max-width {
+  width: 100%;
+}
+
+.group {
+  font-weight: bolder;
+  text-decoration: underline;
+}
+
+.group:not(:first-child) {
+  padding-top: 8px;
+}
+
+.number {
+  width: 80px;
+}
+
+.number {
+  text-align: center;
+}
+
+.text-icon {
+  padding-right: 8px;
+}
+
+.star {
+  padding: 8px 6px;
+}
+
+::-webkit-outer-spin-button, ::-webkit-inner-spin-button, ::-webkit-calendar-picker-indicator {
+  -webkit-appearance: none;
+  display: none !important;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  -webkit-appearance: textfield;
 }

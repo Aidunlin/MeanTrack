@@ -89,7 +89,7 @@
         );
 
         unsubUserDoc = onSnapshot(userDocument, (doc) => {
-          Object.entries(doc.data()).forEach(data => {
+          Object.entries(doc.data()).forEach((data) => {
             if (userData.hasOwnProperty(data[0])) {
               if (typeof data[1] == typeof userData[data[0]]) {
                 userData[data[0]] = data[1];
@@ -142,22 +142,31 @@
 
 <svelte:window on:load={load} />
 
-<h1>MeanTrack</h1>
+<div class="flex spaced bg">
+  <span class="padding">MeanTrack</span>
+  {#if userAccount}
+    <button on:click={logout}>Logout</button>
+  {:else}
+    <button on:click={login}>Login with Google</button>
+  {/if}
+</div>
 
-{#if !userAccount}
-  <button on:click={login}>Login with Google</button>
-{:else}
-  <button on:click={logout}>Logout</button>
-  <button on:click={changeTeam}>Change Team</button>
-  <p>Welcome, {userAccount.displayName} (Team {userData.team})</p>
-  <p>Hours: {userData.hours.toFixed(2)}</p>
-  <p>
-    {userData.tracking ? "Started" : "Stopped"} tracking on
-    {userData.lastAction
-      .toDate()
-      .toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
-  </p>
-  <button on:click={toggleTracking}>
-    {userData.tracking ? "Stop" : "Start"} tracking
-  </button>
+{#if userAccount}
+  <div class="flex spaced">
+    <span class="padding">{userAccount.displayName} - Team {userData.team}</span>
+    <span class="padding">Hours: {userData.hours.toFixed(2)}</span>
+    <button on:click={toggleTracking}>
+      {userData.tracking ? "Stop" : "Start"} tracking
+    </button>
+    <span class="padding">
+      {userData.tracking ? "Started" : "Stopped"}:
+      {userData.lastAction
+        .toDate()
+        .toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
+    </span>
+  </div>
+
+  <div class="flex spaced extend-down bg">
+    <button on:click={changeTeam}>Change Team</button>
+  </div>
 {/if}
