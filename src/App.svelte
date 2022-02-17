@@ -23,6 +23,7 @@
     CollectionReference,
     Timestamp,
   } from "firebase/firestore";
+import Icon from "./Icon.svelte";
 
   const firebaseConfig: FirebaseOptions = {
     apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
@@ -101,10 +102,13 @@
         getDoc(userDocument)
           .then((doc) => {
             if (!doc.exists()) {
-              setDoc(userDocument, userData);
+              setDoc(userDocument, userData).catch(console.log);
             }
+            document.body.classList.remove("hide");
           })
           .catch(console.log);
+      } else {
+        document.body.classList.remove("hide");
       }
     });
   }
@@ -114,15 +118,11 @@
   }
 
   function logout() {
-    signOut(auth)
-      .then(() => {
-        unsubUserDoc();
-      })
-      .catch(console.log);
+    signOut(auth).then(unsubUserDoc).catch(console.log);
   }
 
   function changeTeam() {
-    userData.team = parseInt(prompt("Enter your team's number"));
+    userData.team = parseInt(prompt("Enter your team's number") ?? "0") ?? 0;
     setDoc(userDocument, userData).catch(console.log);
   }
 
@@ -142,31 +142,36 @@
 
 <svelte:window on:load={load} />
 
-<div class="flex spaced bg">
-  <span class="padding">MeanTrack</span>
-  {#if userAccount}
-    <button on:click={logout}>Logout</button>
-  {:else}
-    <button on:click={login}>Login with Google</button>
-  {/if}
+<div class="flex spaced center bg">
+  <span class="icon-button padding"><Icon name="hourglass" />MeanTrack</span>
 </div>
 
-{#if userAccount}
-  <div class="flex spaced">
-    <span class="padding">{userAccount.displayName} - Team {userData.team}</span>
-    <span class="padding">Hours: {userData.hours.toFixed(2)}</span>
-    <button on:click={toggleTracking}>
-      {userData.tracking ? "Stop" : "Start"} tracking
+<div class="flex spaced center">
+  {#if userAccount}
+    <span class="max-width padding">
+      {userAccount.displayName} - Team {userData.team}
+    </span>
+    <span class="max-width padding">Hours: {userData.hours.toFixed(2)}</span>
+    <button class="big" on:click={toggleTracking}>
+      <Icon name={userData.tracking ? "pause" : "play"} />
     </button>
-    <span class="padding">
+    <span class="max-width padding">
       {userData.tracking ? "Started" : "Stopped"}:
       {userData.lastAction
         .toDate()
         .toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
     </span>
-  </div>
+  {:else}
+    <button class="icon-button" on:click={login}><Icon name="sign-in" />Login with Google</button>
+  {/if}
+</div>
 
-  <div class="flex spaced extend-down bg">
-    <button on:click={changeTeam}>Change Team</button>
-  </div>
-{/if}
+<div class="flex spaced space-between bg">
+  {#if userAccount}
+    <button class="icon-button" on:click={logout}><Icon name="sign-out" />Logout</button>
+    <button class="icon-button" on:click={changeTeam}><Icon name="edit" />Change Team</button>
+  {:else}
+    <span class="padding">Welcome</span>
+    <span class="padding">Please login</span>
+  {/if}
+</div>

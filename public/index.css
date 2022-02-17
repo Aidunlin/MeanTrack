@@ -1,3 +1,13 @@
+@media (max-width: 480px) {
+  body * {
+    text-align: center;
+  }
+  
+  .spaced > *, .flex button:only-child {
+    width: 100% !important;
+  }
+}
+
 html {
   --bg-color: #000;
   --fg-color: rgba(127, 127, 127, 0.2);
@@ -6,8 +16,16 @@ html {
   background: var(--bg-color);
   color-scheme: dark;
   margin: auto;
-  max-width: 512px;
+  max-width: 720px;
   touch-action: pan-y;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 0;
+  min-height: 100vh;
 }
 
 body * {
@@ -18,17 +36,9 @@ body * {
   font-family: monospace;
   font-size: 24px;
   line-height: 1.25;
-  text-align: center;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  min-height: 100vh;
-}
-
-button, input, select, option, path, #title {
+input, select, option, path {
   color: var(--theme-color);
 }
 
@@ -45,6 +55,10 @@ button {
   text-decoration: none;
 }
 
+button:hover {
+  opacity: 0.7;
+}
+
 input, select {
   -webkit-appearance: none;
   appearance: none;
@@ -56,12 +70,25 @@ select {
   cursor: pointer;
 }
 
-svg, #logo {
-  height: 30px;
-  vertical-align: bottom;
+svg {
+  height: 1em;
 }
 
-.flex {
+.big {
+  background: none;
+  display: flex;
+  justify-content: space-around;
+  padding: 0;
+}
+
+.big svg {
+  height: 30vmin;
+  min-height: 6em;
+  min-width: 6em;
+  width: 30vmin;
+}
+
+.flex, .icon-button {
   align-items: flex-end;
   display: flex;
   flex-wrap: wrap;
@@ -76,12 +103,22 @@ svg, #logo {
   padding: 8px;
 }
 
-.spaced > *, .flex button:only-child {
-  width: 100% !important;
-}
-
 .spaced .flex > * {
   flex: auto;
+}
+
+.max-width {
+  width: 100%;
+}
+
+.center, .icon-button {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.icon-button svg {
+  padding-right: 8px;
 }
 
 .extend-down {
@@ -92,33 +129,8 @@ svg, #logo {
   display: none !important;
 }
 
-.group, .max-width {
-  width: 100%;
-}
-
-.group {
-  font-weight: bolder;
-  text-decoration: underline;
-}
-
-.group:not(:first-child) {
-  padding-top: 8px;
-}
-
-.number {
-  width: 80px;
-}
-
-.number {
-  text-align: center;
-}
-
 .text-icon {
   padding-right: 8px;
-}
-
-.star {
-  padding: 8px 6px;
 }
 
 ::-webkit-outer-spin-button, ::-webkit-inner-spin-button, ::-webkit-calendar-picker-indicator {
