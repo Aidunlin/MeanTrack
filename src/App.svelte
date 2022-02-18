@@ -22,8 +22,12 @@
     FirestoreDataConverter,
     CollectionReference,
     Timestamp,
+    query,
+    where,
+    DocumentSnapshot,
   } from "firebase/firestore";
-import Icon from "./Icon.svelte";
+  import Icon from "./Icon.svelte";
+  import IconButton from "./IconButton.svelte";
 
   const firebaseConfig: FirebaseOptions = {
     apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
@@ -37,22 +41,45 @@ import Icon from "./Icon.svelte";
   interface UserData {
     hours: number;
     lastAction: Timestamp;
-    team: number;
+    teamId: string;
     tracking: boolean;
   }
 
-  const userDataConverter: FirestoreDataConverter<UserData> = {
+  interface TeamData {
+    members: string[];
+    name: string;
+    number: number;
+    ownerId: string;
+  }
+
+  const userDataConv: FirestoreDataConverter<UserData> = {
     toFirestore: (data: UserData) => {
       return { ...data };
     },
 
-    fromFirestore: (snapshot, options): UserData => {
-      const data = snapshot.data(options);
+    fromFirestore: (snapshot, options) => {
+      const user = snapshot.data(options);
       return {
-        hours: data.hours,
-        lastAction: data.lastAction,
-        team: data.team,
-        tracking: data.tracking,
+        hours: user.hours,
+        lastAction: user.lastAction,
+        teamId: user.teamId,
+        tracking: user.tracking,
+      };
+    },
+  };
+
+  const teamDataConv: FirestoreDataConverter<TeamData> = {
+    toFirestore: (data: TeamData) => {
+      return { ...data };
+    },
+
+    fromFirestore: (snapshot, options) => {
+      const team = snapshot.data(options);
+      return {
+        members: team.members,
+        name: team.name,
+        number: team.number,
+        ownerId: team.ownerId,
       };
     },
   };
@@ -60,18 +87,57 @@ import Icon from "./Icon.svelte";
   let firebaseApp: FirebaseApp;
   let auth: Auth;
   let firestore: Firestore;
+  let userAccount: User;
 
   let userData: UserData = {
     hours: 0,
     lastAction: new Timestamp(0, 0),
-    team: 0,
+    teamId: "",
     tracking: false,
   };
-  let userAccount: User;
-  let userDocument: DocumentReference<UserData>;
-  let unsubUserDoc: Unsubscribe;
 
-  let usersCollection: CollectionReference;
+  let userDoc: DocumentReference<UserData>;
+  let unsubUserDoc: Unsubscribe;
+  let usersColl: CollectionReference;
+
+  let teamData: TeamData = {
+    members: [],
+    name: "",
+    number: 0,
+    ownerId: "",
+  };
+
+  let teamDoc: DocumentReference<TeamData>;
+  let unsubTeamDoc: Unsubscribe;
+  let teamsColl: CollectionReference;
+
+  let isTeamOwner = false;
+  let isVerified = false;
+
+  async function loadUser() {
+    usersColl = collection(firestore, "users").withConverter(userDataConv);
+    userDoc = doc(usersColl, userAccount.uid).withConverter(userDataConv);
+
+    teamsColl = collection(firestore, "teams").withConverter(teamDataConv);
+
+    unsubUserDoc = onSnapshot(userDoc, (userSnapshot) => {
+      if (userSnapshot.exists()) {
+        if (userData.teamId != userSnapshot.data().teamId) {
+          teamDoc = doc(teamsColl, userSnapshot.data().teamId).withConverter(
+            teamDataConv
+          );
+          unsubTeamDoc = onSnapshot(
+            teamDoc,
+            (teamSnapshot) => (teamData = teamSnapshot.data())
+          );
+        }
+
+        userData = userSnapshot.data();
+      } else {
+        setDoc(userDoc, userData).catch(console.log);
+      }
+    });
+  }
 
   function load() {
     firebaseApp = initializeApp(firebaseConfig);
@@ -82,33 +148,7 @@ import Icon from "./Icon.svelte";
       userAccount = user;
 
       if (userAccount) {
-        usersCollection = collection(firestore, "users").withConverter(
-          userDataConverter
-        );
-        userDocument = doc(usersCollection, userAccount.uid).withConverter(
-          userDataConverter
-        );
-
-        unsubUserDoc = onSnapshot(userDocument, (doc) => {
-          Object.entries(doc.data()).forEach((data) => {
-            if (userData.hasOwnProperty(data[0])) {
-              if (typeof data[1] == typeof userData[data[0]]) {
-                userData[data[0]] = data[1];
-              }
-            }
-          });
-        });
-
-        getDoc(userDocument)
-          .then((doc) => {
-            if (!doc.exists()) {
-              setDoc(userDocument, userData).catch(console.log);
-            }
-            document.body.classList.remove("hide");
-          })
-          .catch(console.log);
-      } else {
-        document.body.classList.remove("hide");
+        loadUser();
       }
     });
   }
@@ -118,12 +158,12 @@ import Icon from "./Icon.svelte";
   }
 
   function logout() {
-    signOut(auth).then(unsubUserDoc).catch(console.log);
-  }
-
-  function changeTeam() {
-    userData.team = parseInt(prompt("Enter your team's number") ?? "0") ?? 0;
-    setDoc(userDocument, userData).catch(console.log);
+    signOut(auth)
+      .then(() => {
+        unsubUserDoc();
+        unsubTeamDoc();
+      })
+      .catch(console.log);
   }
 
   function toggleTracking() {
@@ -136,42 +176,60 @@ import Icon from "./Icon.svelte";
 
     userData.tracking = !userData.tracking;
     userData.lastAction = newAction;
-    setDoc(userDocument, userData).catch(console.log);
+    setDoc(userDoc, userData).catch(console.log);
+  }
+
+  $: {
+    if (userAccount) {
+      isTeamOwner = teamData.ownerId == userAccount.uid;
+      isVerified = teamData.members.includes(userAccount.uid) || isTeamOwner;
+    }
   }
 </script>
 
 <svelte:window on:load={load} />
 
 <div class="flex spaced center bg">
-  <span class="icon-button padding"><Icon name="hourglass" />MeanTrack</span>
+  <span class="icon-button padding">
+    <Icon name="hourglass" />MeanTrack
+  </span>
 </div>
 
 <div class="flex spaced center">
   {#if userAccount}
-    <span class="max-width padding">
-      {userAccount.displayName} - Team {userData.team}
-    </span>
-    <span class="max-width padding">Hours: {userData.hours.toFixed(2)}</span>
+    <p>{userAccount.displayName}</p>
+
+    {#if teamData.number}
+      <p>{teamData.name} - {teamData.number}</p>
+    {/if}
+
+    {#if isTeamOwner}
+      <p>(You own this team)</p>
+    {:else if !isVerified}
+      <p>(Unverified)</p>
+    {/if}
+
     <button class="big" on:click={toggleTracking}>
       <Icon name={userData.tracking ? "pause" : "play"} />
     </button>
-    <span class="max-width padding">
-      {userData.tracking ? "Started" : "Stopped"}:
-      {userData.lastAction
-        .toDate()
-        .toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
-    </span>
+    <p>Hours: {userData.hours.toFixed(2)}</p>
+
+    {#if userData.lastAction.toMillis()}
+      <p>
+        {userData.tracking ? "Started" : "Stopped"}:
+        {userData.lastAction.toDate().toLocaleString(undefined, {
+          dateStyle: "short",
+          timeStyle: "short",
+        })}
+      </p>
+    {/if}
   {:else}
-    <button class="icon-button" on:click={login}><Icon name="sign-in" />Login with Google</button>
+    <IconButton icon="sign-in" text="Login with Google" on:click={login} />
   {/if}
 </div>
 
 <div class="flex spaced space-between bg">
   {#if userAccount}
-    <button class="icon-button" on:click={logout}><Icon name="sign-out" />Logout</button>
-    <button class="icon-button" on:click={changeTeam}><Icon name="edit" />Change Team</button>
-  {:else}
-    <span class="padding">Welcome</span>
-    <span class="padding">Please login</span>
+    <IconButton icon="sign-out" text="Logout" on:click={logout} />
   {/if}
 </div>

@@ -38,6 +38,11 @@ body * {
   line-height: 1.25;
 }
 
+body *::selection {
+  background: var(--theme-color);
+  color: var(--bg-color);
+}
+
 input, select, option, path {
   color: var(--theme-color);
 }
@@ -48,6 +53,12 @@ button, input, select, .number, .bg {
 
 button, input, select, .number, .padding {
   padding: 8px;
+}
+
+p {
+  margin: 0;
+  padding: 8px;
+  width: 100%;
 }
 
 button {
@@ -127,10 +138,6 @@ svg {
 
 .hide {
   display: none !important;
-}
-
-.text-icon {
-  padding-right: 8px;
 }
 
 ::-webkit-outer-spin-button, ::-webkit-inner-spin-button, ::-webkit-calendar-picker-indicator {
