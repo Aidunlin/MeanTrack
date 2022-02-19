@@ -113,6 +113,7 @@
 
   let isTeamOwner = false;
   let isVerified = false;
+  let menuVisible = false;
 
   async function loadUser() {
     usersColl = collection(firestore, "users").withConverter(userDataConv);
@@ -122,7 +123,10 @@
 
     unsubUserDoc = onSnapshot(userDoc, (userSnapshot) => {
       if (userSnapshot.exists()) {
-        if (userData.teamId != userSnapshot.data().teamId) {
+        if (
+          userSnapshot.data().teamId &&
+          userSnapshot.data().teamId != userData.teamId
+        ) {
           teamDoc = doc(teamsColl, userSnapshot.data().teamId).withConverter(
             teamDataConv
           );
@@ -179,6 +183,31 @@
     setDoc(userDoc, userData).catch(console.log);
   }
 
+  function toggleMenu() {
+    menuVisible = !menuVisible;
+  }
+
+  async function createTeam() {
+    if (!userData.teamId && !teamData.number) {
+      if (confirm("So you want to create a team?")) {
+        let teamName = prompt("Enter a team name (i.e. 'Team Mean Machine'):");
+        let teamNumber = parseInt(prompt("Enter a team number (i.e. '2471'):") ?? "0") ?? 0;
+        if (teamName && teamNumber) {
+          teamDoc = doc(teamsColl).withConverter(teamDataConv);
+          teamData = {
+            name: teamName,
+            number: teamNumber,
+            members: [userAccount.uid],
+            ownerId: userAccount.uid,
+          };
+          await setDoc(teamDoc, teamData);
+          userData.teamId = teamDoc.id;
+          setDoc(userDoc, userData).catch(console.log);
+        }
+      }
+    }
+  }
+
   $: {
     if (userAccount) {
       isTeamOwner = teamData.ownerId == userAccount.uid;
@@ -189,10 +218,27 @@
 
 <svelte:window on:load={load} />
 
-<div class="flex spaced center bg">
-  <span class="icon-button padding">
-    <Icon name="hourglass" />MeanTrack
-  </span>
+<div class="flex bg">
+  <div class="flex spaced space-between max-width">
+    <IconButton icon="hourglass" text="MeanTrack" on:click={toggleMenu} />
+  
+    {#if userAccount}
+      <IconButton icon="sign-out" text="Sign out" on:click={logout} />
+    {:else}
+      <IconButton icon="sign-in" text="Sign in w/ Google" on:click={login} />
+    {/if}
+  </div>
+
+  {#if menuVisible && userAccount}
+    <div class="flex spaced max-width">
+      <p class="header">Menu</p>
+      {#if teamData.number}
+        <IconButton icon="users" text="View Team" />
+      {:else}
+        <IconButton icon="users" text="Create Team" on:click={createTeam} />
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <div class="flex spaced center">
@@ -201,35 +247,27 @@
 
     {#if teamData.number}
       <p>{teamData.name} - {teamData.number}</p>
-    {/if}
-
-    {#if isTeamOwner}
-      <p>(You own this team)</p>
-    {:else if !isVerified}
-      <p>(Unverified)</p>
+      {#if isTeamOwner}
+        <p>(You own this team)</p>
+      {:else if !isVerified}
+        <p>(Unverified)</p>
+      {/if}
     {/if}
 
     <button class="big" on:click={toggleTracking}>
       <Icon name={userData.tracking ? "pause" : "play"} />
     </button>
-    <p>Hours: {userData.hours.toFixed(2)}</p>
+    <p>Hours:<br>{userData.hours.toFixed(2)}</p>
 
     {#if userData.lastAction.toMillis()}
       <p>
         {userData.tracking ? "Started" : "Stopped"}:
+        <br>
         {userData.lastAction.toDate().toLocaleString(undefined, {
           dateStyle: "short",
           timeStyle: "short",
         })}
       </p>
     {/if}
-  {:else}
-    <IconButton icon="sign-in" text="Login with Google" on:click={login} />
-  {/if}
-</div>
-
-<div class="flex spaced space-between bg">
-  {#if userAccount}
-    <IconButton icon="sign-out" text="Logout" on:click={logout} />
   {/if}
 </div>
