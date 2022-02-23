@@ -165,7 +165,11 @@
     teamDoc = doc(teamsColl, joinTeamId).withConverter(teamDataConv);
     getDoc(teamDoc)
       .then((teamSnapshot) => {
-        teamData = teamSnapshot.data();
+        if (teamSnapshot.exists()) {
+          teamData = teamSnapshot.data();
+          userData.teamId = teamData.id;
+          setDoc(userDoc, userData).catch(console.error);
+        }
       })
       .catch(console.error);
   }
