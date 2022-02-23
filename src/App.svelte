@@ -7,8 +7,6 @@
     GoogleAuthProvider,
     signInWithPopup,
     signOut,
-    User,
-    Unsubscribe,
   } from "firebase/auth";
   import {
     doc,
@@ -17,17 +15,15 @@
     Firestore,
     DocumentReference,
     getDoc,
-    onSnapshot,
     collection,
     FirestoreDataConverter,
     CollectionReference,
     Timestamp,
+    deleteDoc,
     query,
     where,
-    DocumentSnapshot,
+    getDocs,
   } from "firebase/firestore";
-  import Icon from "./Icon.svelte";
-  import IconButton from "./IconButton.svelte";
 
   const firebaseConfig: FirebaseOptions = {
     apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
@@ -39,13 +35,16 @@
   };
 
   interface UserData {
+    id: string;
     hours: number;
     lastAction: Timestamp;
+    name: string;
     teamId: string;
     tracking: boolean;
   }
 
   interface TeamData {
+    id: string;
     members: string[];
     name: string;
     number: number;
@@ -54,14 +53,21 @@
 
   const userDataConv: FirestoreDataConverter<UserData> = {
     toFirestore: (data: UserData) => {
-      return { ...data };
+      return {
+        hours: data.hours,
+        lastAction: data.lastAction,
+        name: data.name,
+        teamId: data.teamId,
+        tracking: data.tracking,
+      };
     },
-
     fromFirestore: (snapshot, options) => {
       const user = snapshot.data(options);
       return {
+        id: snapshot.id,
         hours: user.hours,
         lastAction: user.lastAction,
+        name: user.name,
         teamId: user.teamId,
         tracking: user.tracking,
       };
@@ -70,12 +76,17 @@
 
   const teamDataConv: FirestoreDataConverter<TeamData> = {
     toFirestore: (data: TeamData) => {
-      return { ...data };
+      return {
+        members: data.members,
+        name: data.name,
+        number: data.number,
+        ownerId: data.ownerId,
+      };
     },
-
     fromFirestore: (snapshot, options) => {
       const team = snapshot.data(options);
       return {
+        id: snapshot.id,
         members: team.members,
         name: team.name,
         number: team.number,
@@ -87,187 +98,258 @@
   let firebaseApp: FirebaseApp;
   let auth: Auth;
   let firestore: Firestore;
-  let userAccount: User;
 
-  let userData: UserData = {
-    hours: 0,
-    lastAction: new Timestamp(0, 0),
-    teamId: "",
-    tracking: false,
-  };
-
+  let userData: UserData;
   let userDoc: DocumentReference<UserData>;
-  let unsubUserDoc: Unsubscribe;
-  let usersColl: CollectionReference;
+  let usersColl: CollectionReference<UserData>;
 
-  let teamData: TeamData = {
-    members: [],
-    name: "",
-    number: 0,
-    ownerId: "",
-  };
-
+  let teamData: TeamData;
   let teamDoc: DocumentReference<TeamData>;
-  let unsubTeamDoc: Unsubscribe;
-  let teamsColl: CollectionReference;
+  let teamsColl: CollectionReference<TeamData>;
 
-  let isTeamOwner = false;
-  let isVerified = false;
-  let menuVisible = false;
+  let joinTeamId: string;
+  let createTeamName: string;
+  let createTeamNumber: number;
 
-  async function loadUser() {
-    usersColl = collection(firestore, "users").withConverter(userDataConv);
-    userDoc = doc(usersColl, userAccount.uid).withConverter(userDataConv);
-
-    teamsColl = collection(firestore, "teams").withConverter(teamDataConv);
-
-    unsubUserDoc = onSnapshot(userDoc, (userSnapshot) => {
-      if (userSnapshot.exists()) {
-        if (
-          userSnapshot.data().teamId &&
-          userSnapshot.data().teamId != userData.teamId
-        ) {
-          teamDoc = doc(teamsColl, userSnapshot.data().teamId).withConverter(
-            teamDataConv
-          );
-          unsubTeamDoc = onSnapshot(
-            teamDoc,
-            (teamSnapshot) => (teamData = teamSnapshot.data())
-          );
-        }
-
-        userData = userSnapshot.data();
-      } else {
-        setDoc(userDoc, userData).catch(console.log);
-      }
-    });
+  function loadTeamDoc(id: string) {
+    teamDoc = doc(teamsColl, id).withConverter(teamDataConv);
+    getDoc(teamDoc)
+      .then((teamSnapshot) => (teamData = teamSnapshot.data()))
+      .catch(console.error);
   }
 
-  function load() {
-    firebaseApp = initializeApp(firebaseConfig);
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
-
-    onAuthStateChanged(auth, (user) => {
-      userAccount = user;
-
-      if (userAccount) {
-        loadUser();
-      }
-    });
+  function loadUserDoc() {
+    getDoc(userDoc)
+      .then((userSnapshot) => {
+        if (userSnapshot.exists()) {
+          userData = userSnapshot.data();
+          if (userData.teamId) {
+            loadTeamDoc(userData.teamId);
+          }
+        } else {
+          setDoc(userDoc, userData).catch(console.error);
+        }
+      })
+      .catch(console.error);
   }
 
   function login() {
-    signInWithPopup(auth, new GoogleAuthProvider()).catch(console.log);
+    signInWithPopup(auth, new GoogleAuthProvider()).catch(console.error);
   }
 
   function logout() {
-    signOut(auth)
-      .then(() => {
-        unsubUserDoc();
-        unsubTeamDoc();
-      })
-      .catch(console.log);
+    signOut(auth).catch(console.error);
   }
 
   function toggleTracking() {
     let newAction = Timestamp.now();
     let difference = newAction.toMillis() - userData.lastAction.toMillis();
-
     if (userData.tracking) {
       userData.hours += difference / 1000 / 3600;
     }
-
     userData.tracking = !userData.tracking;
     userData.lastAction = newAction;
-    setDoc(userDoc, userData).catch(console.log);
+    setDoc(userDoc, userData).catch(console.error);
   }
 
-  function toggleMenu() {
-    menuVisible = !menuVisible;
+  function joinTeam() {
+    teamDoc = doc(teamsColl, joinTeamId).withConverter(teamDataConv);
+    getDoc(teamDoc)
+      .then((teamSnapshot) => {
+        teamData = teamSnapshot.data();
+      })
+      .catch(console.error);
   }
 
-  async function createTeam() {
-    if (!userData.teamId && !teamData.number) {
-      if (confirm("So you want to create a team?")) {
-        let teamName = prompt("Enter a team name (i.e. 'Team Mean Machine'):");
-        let teamNumber = parseInt(prompt("Enter a team number (i.e. '2471'):") ?? "0") ?? 0;
-        if (teamName && teamNumber) {
-          teamDoc = doc(teamsColl).withConverter(teamDataConv);
-          teamData = {
-            name: teamName,
-            number: teamNumber,
-            members: [userAccount.uid],
-            ownerId: userAccount.uid,
-          };
-          await setDoc(teamDoc, teamData);
+  function createTeam() {
+    if (createTeamName && createTeamNumber) {
+      teamDoc = doc(teamsColl).withConverter(teamDataConv);
+      teamData = {
+        id: teamDoc.id,
+        name: createTeamName,
+        number: createTeamNumber,
+        members: [userData.id],
+        ownerId: userData.id,
+      };
+      setDoc(teamDoc, teamData)
+        .then(() => {
           userData.teamId = teamDoc.id;
-          setDoc(userDoc, userData).catch(console.log);
-        }
-      }
+          setDoc(userDoc, userData).catch(console.error);
+        })
+        .catch(console.error);
     }
   }
 
-  $: {
-    if (userAccount) {
-      isTeamOwner = teamData.ownerId == userAccount.uid;
-      isVerified = teamData.members.includes(userAccount.uid) || isTeamOwner;
+  let teamMembers: UserData[] = [];
+
+  function getTeamMembers() {
+    teamMembers = [];
+    const q = query(usersColl, where("teamId", "==", teamDoc.id));
+
+    getDocs(q).then((query) => {
+      query.forEach((memberDoc) => {
+        if (teamData.members.includes(memberDoc.id)) {
+          teamMembers = [...teamMembers, memberDoc.data()];
+        }
+      });
+    });
+  }
+
+  let unverifiedMembers: UserData[] = [];
+
+  function getUnverifiedMembers() {
+    unverifiedMembers = [];
+    const q = query(usersColl, where("teamId", "==", teamDoc.id));
+
+    getDocs(q).then((query) => {
+      query.forEach((memberDoc) => {
+        if (!teamData.members.includes(memberDoc.id)) {
+          unverifiedMembers = [...unverifiedMembers, memberDoc.data()];
+        }
+      });
+    });
+  }
+
+  function verifyMember(id: string) {
+    if (!teamData.members.includes(id)) {
+      teamData.members.push(id);
+      setDoc(teamDoc, teamData)
+        .then(() => {
+          getTeamMembers();
+          getUnverifiedMembers();
+        })
+        .catch(console.error);
     }
   }
+
+  function deleteTeam() {
+    if (confirm("Are you sure?")) {
+      deleteDoc(teamDoc)
+        .then(() => {
+          teamData = null;
+          userData.teamId = "";
+          setDoc(userDoc, userData).catch(console.error);
+        })
+        .catch(console.error);
+    }
+  }
+
+  function leaveTeam() {}
+
+  firebaseApp = initializeApp(firebaseConfig);
+  auth = getAuth(firebaseApp);
+  firestore = getFirestore(firebaseApp);
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      usersColl = collection(firestore, "users").withConverter(userDataConv);
+      teamsColl = collection(firestore, "teams").withConverter(teamDataConv);
+      userDoc = doc(usersColl, user.uid).withConverter(userDataConv);
+      loadUserDoc();
+    } else {
+      usersColl = null;
+      teamsColl = null;
+      userDoc = null;
+      teamDoc = null;
+      userData = null;
+      teamData = null;
+    }
+  });
 </script>
 
-<svelte:window on:load={load} />
-
-<div class="flex bg">
-  <div class="flex spaced space-between max-width">
-    <IconButton icon="hourglass" text="MeanTrack" on:click={toggleMenu} />
-  
-    {#if userAccount}
-      <IconButton icon="sign-out" text="Sign out" on:click={logout} />
-    {:else}
-      <IconButton icon="sign-in" text="Sign in w/ Google" on:click={login} />
-    {/if}
-  </div>
-
-  {#if menuVisible && userAccount}
-    <div class="flex spaced max-width">
-      <p class="header">Menu</p>
-      {#if teamData.number}
-        <IconButton icon="users" text="View Team" />
-      {:else}
-        <IconButton icon="users" text="Create Team" on:click={createTeam} />
-      {/if}
-    </div>
+<header>
+  <h1>MeanTrack</h1>
+  {#if userData}
+    <button on:click={logout}>Sign out</button>
+  {:else}
+    <button on:click={login}>Sign in</button>
   {/if}
-</div>
-
-<div class="flex spaced center">
-  {#if userAccount}
-    <p>{userAccount.displayName}</p>
-
-    {#if teamData.number}
-      <p>{teamData.name} - {teamData.number}</p>
-      {#if isTeamOwner}
-        <p>(You own this team)</p>
-      {:else if !isVerified}
-        <p>(Unverified)</p>
-      {/if}
-    {/if}
-
-    <button class="big" on:click={toggleTracking}>
-      <Icon name={userData.tracking ? "pause" : "play"} />
-    </button>
-    <p>Hours:<br>{userData.hours.toFixed(2)}</p>
-
-    {#if userData.lastAction.toMillis()}
-      <p>
-        {userData.tracking ? "Started" : "Stopped"}:
-        <br>
+</header>
+{#if userData}
+  <h2>You</h2>
+  <p>{userData.name}</p>
+  <p>Hours: <code>{userData.hours.toFixed(2)}</code></p>
+  {#if userData.lastAction.toMillis()}
+    <p>
+      <span>{userData.tracking ? "Started:" : "Stopped:"}</span>
+      <code>
         {userData.lastAction.toDate().toLocaleString(undefined, {
           dateStyle: "short",
           timeStyle: "short",
         })}
-      </p>
-    {/if}
+      </code>
+    </p>
   {/if}
-</div>
+  <p>
+    <button on:click={toggleTracking}>
+      {userData.tracking ? "Stop" : "Start"} tracking
+    </button>
+  </p>
+  <h2>Team</h2>
+  {#if teamData}
+    <p>{teamData.name}: <code>{teamData.number}</code></p>
+    {#if userData.id == teamData.ownerId}
+      <p>You own this team.</p>
+      <p><button on:click={deleteTeam}>Delete team</button></p>
+      <h3>Members</h3>
+      <p><button on:click={getTeamMembers}>Refresh</button></p>
+      {#if teamMembers.length}
+        <ul>
+          {#each teamMembers as member}
+            <li>
+              {member.name}
+              <br />
+              Hours: <code>{member.hours.toFixed(2)}</code>
+            </li>
+          {/each}
+        </ul>
+      {:else}
+        <p>Team members will be listed here.</p>
+      {/if}
+      <h3>Unverified</h3>
+      <p><button on:click={getUnverifiedMembers}>Refresh</button></p>
+      {#if unverifiedMembers.length}
+        <ul>
+          {#each unverifiedMembers as member}
+            <li>
+              {member.name}
+              <br />
+              <button on:click={() => verifyMember(member.id)}>Verify</button>
+            </li>
+          {/each}
+        </ul>
+      {:else}
+        <p>Unverified members will be listed here.</p>
+      {/if}
+    {:else}
+      {#if !teamData.members.includes(userData.id)}
+        <p>UNVERIFIED</p>
+      {/if}
+      <p><button on:click={leaveTeam}>Leave team</button></p>
+    {/if}
+  {:else}
+    <details>
+      <summary>Join a team</summary>
+      <label>
+        Team id
+        <br />
+        <input bind:value={joinTeamId} />
+      </label>
+      <p><button on:click={joinTeam}>Join</button></p>
+    </details>
+    <details>
+      <summary>Create a team</summary>
+      <label>
+        Team name
+        <br />
+        <input bind:value={createTeamName} />
+      </label>
+      <br />
+      <label>
+        Team number
+        <br />
+        <input bind:value={createTeamNumber} type="number" />
+      </label>
+      <p><button on:click={createTeam}>Create</button></p>
+    </details>
+  {/if}
+{/if}
