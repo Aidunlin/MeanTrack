@@ -7,6 +7,7 @@
     GoogleAuthProvider,
     signInWithPopup,
     signOut,
+    User,
   } from "firebase/auth";
   import {
     doc,
@@ -118,7 +119,7 @@
       .catch(console.error);
   }
 
-  function loadUserDoc() {
+  function loadUserDoc(userAccount: User) {
     getDoc(userDoc)
       .then((userSnapshot) => {
         if (userSnapshot.exists()) {
@@ -127,6 +128,14 @@
             loadTeamDoc(userData.teamId);
           }
         } else {
+          userData = {
+            id: userAccount.uid,
+            hours: 0,
+            lastAction: new Timestamp(0, 0),
+            name: userAccount.displayName,
+            teamId: "",
+            tracking: false,
+          };
           setDoc(userDoc, userData).catch(console.error);
         }
       })
@@ -244,7 +253,7 @@
       usersColl = collection(firestore, "users").withConverter(userDataConv);
       teamsColl = collection(firestore, "teams").withConverter(teamDataConv);
       userDoc = doc(usersColl, user.uid).withConverter(userDataConv);
-      loadUserDoc();
+      loadUserDoc(user);
     } else {
       usersColl = null;
       teamsColl = null;
