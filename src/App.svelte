@@ -43,11 +43,14 @@
   let teamDoc: DocumentReference<TeamData>;
   let teamsColl: CollectionReference<TeamData>;
 
+  let loaded = false;
+
   function loadTeamDoc(id: string) {
     teamDoc = doc(teamsColl, id).withConverter(teamDataConv);
     getDoc(teamDoc)
       .then((teamSnapshot) => {
         teamData = teamSnapshot.data();
+        loaded = true;
       })
       .catch(console.error);
   }
@@ -59,6 +62,8 @@
           userData = userSnapshot.data();
           if (userData.teamId) {
             loadTeamDoc(userData.teamId);
+          } else {
+            loaded = true;
           }
         } else {
           userData = {
@@ -69,6 +74,7 @@
             teamId: "",
             tracking: false,
           };
+          loaded = true;
           setDoc(userDoc, userData).catch(console.error);
         }
       })
@@ -91,6 +97,7 @@
       teamDoc = null;
       userData = null;
       teamData = null;
+      loaded = true;
     }
   });
 </script>
@@ -98,21 +105,23 @@
 <header>
   <h1>MeanTrack</h1>
 </header>
-<UserMenu bind:auth bind:userData bind:userDoc />
-{#if teamData}
-  <TeamMenu
-    bind:userData
-    bind:userDoc
-    bind:usersColl
-    bind:teamData
-    bind:teamDoc
-  />
-{:else if userData}
-  <TeamlessMenu
-    bind:userData
-    bind:userDoc
-    bind:teamData
-    bind:teamDoc
-    bind:teamsColl
-  />
+{#if loaded}
+  <UserMenu bind:auth bind:userData bind:userDoc />
+  {#if teamData}
+    <TeamMenu
+      bind:userData
+      bind:userDoc
+      bind:usersColl
+      bind:teamData
+      bind:teamDoc
+    />
+  {:else if userData}
+    <TeamlessMenu
+      bind:userData
+      bind:userDoc
+      bind:teamData
+      bind:teamDoc
+      bind:teamsColl
+    />
+  {/if}
 {/if}

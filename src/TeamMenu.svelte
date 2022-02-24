@@ -18,8 +18,8 @@
   export let teamData: TeamData;
   export let teamDoc: DocumentReference<TeamData>;
 
-  let teamMembers: UserData[] = [];
-  let unverifiedMembers: UserData[] = [];
+  let members: UserData[] = [];
+  let unverifieds: UserData[] = [];
 
   function copyTeamId() {
     if ("clipboard" in navigator) {
@@ -31,8 +31,8 @@
   }
 
   function refreshMembers() {
-    teamMembers = [];
-    unverifiedMembers = [];
+    members = [];
+    unverifieds = [];
     let q = query(
       usersColl,
       where("teamId", "==", teamDoc.id),
@@ -41,24 +41,30 @@
     getDocs(q).then((querySnapshot) => {
       querySnapshot.forEach((memberDoc) => {
         if (teamData.members.includes(memberDoc.id)) {
-          teamMembers = [...teamMembers, memberDoc.data()];
+          members = [...members, memberDoc.data()];
         } else {
-          unverifiedMembers = [...unverifiedMembers, memberDoc.data()];
+          unverifieds = [...unverifieds, memberDoc.data()];
         }
       });
     });
   }
 
-  function verifyMember(id: string) {
-    if (!teamData.members.includes(id)) {
-      teamData.members.push(id);
-      setDoc(teamDoc, teamData).then(refreshMembers).catch(console.error);
+  function verifyMember(member: UserData) {
+    if (!teamData.members.includes(member.id)) {
+      members.push(member);
+      members = members.sort((a, b) => (a.name > b.name ? 1 : -1));
+      unverifieds = unverifieds.filter((m) => m.id != member.id);
+      teamData.members.push(member.id);
+      setDoc(teamDoc, teamData).catch(console.error);
     }
   }
 
-  function unverifyMember(id: string) {
-    teamData.members = teamData.members.filter((member) => member != id);
-    setDoc(teamDoc, teamData).then(refreshMembers).catch(console.error);
+  function unverifyMember(member: UserData) {
+    unverifieds.push(member);
+    unverifieds = unverifieds.sort((a, b) => (a.name > b.name ? 1 : -1));
+    members = members.filter((m) => m.id != member.id);
+    teamData.members = teamData.members.filter((m) => m != member.id);
+    setDoc(teamDoc, teamData).catch(console.error);
   }
 
   function deleteTeam() {
@@ -96,12 +102,12 @@
         <th>Hours</th>
         <th>Actions</th>
       </tr>
-      {#each teamMembers as member}
+      {#each members as member}
         <tr>
           <td>{member.name}</td>
           <td>{member.hours.toFixed(2)}</td>
           <td>
-            <button on:click={() => unverifyMember(member.id)}>Unverify</button>
+            <button on:click={() => unverifyMember(member)}>Unverify</button>
           </td>
         </tr>
       {/each}
@@ -114,11 +120,11 @@
         <th>Name</th>
         <th>Actions</th>
       </tr>
-      {#each unverifiedMembers as member}
+      {#each unverifieds as unverified}
         <tr>
-          <td>{member.name}</td>
+          <td>{unverified.name}</td>
           <td>
-            <button on:click={() => verifyMember(member.id)}>Verify</button>
+            <button on:click={() => verifyMember(unverified)}>Verify</button>
           </td>
         </tr>
       {/each}
