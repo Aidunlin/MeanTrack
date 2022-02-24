@@ -1,79 +1,87 @@
 <script lang="ts">
   import {
-    CollectionReference,
     deleteDoc,
-    DocumentReference,
     getDocs,
     orderBy,
     query,
-    setDoc,
+    updateDoc,
     where,
   } from "firebase/firestore";
-  import type { UserData, TeamData } from "./Global.svelte";
+  import { mt, UserData } from "./Global.svelte";
 
-  export let userData: UserData;
-  export let userDoc: DocumentReference<UserData>;
-  export let usersColl: CollectionReference<UserData>;
+  let verifiedMembers: UserData[] = [];
+  let unverifiedMembers: UserData[] = [];
 
-  export let teamData: TeamData;
-  export let teamDoc: DocumentReference<TeamData>;
-
-  let members: UserData[] = [];
-  let unverifieds: UserData[] = [];
+  function editGoal() {
+    $mt.teamData.goal = parseInt(prompt("Enter a goal:"));
+    updateDoc($mt.teamDocument, {
+      goal: $mt.teamData.goal,
+    }).catch(console.error);
+  }
 
   function copyTeamId() {
     if ("clipboard" in navigator) {
-      navigator.clipboard.writeText(teamData.id);
+      navigator.clipboard.writeText($mt.teamData.id);
       alert("Copied!");
     } else {
-      prompt("Copy the id:", teamData.id);
+      prompt("Copy the id:", $mt.teamData.id);
     }
   }
 
   function refreshMembers() {
-    members = [];
-    unverifieds = [];
-    let q = query(
-      usersColl,
-      where("teamId", "==", teamDoc.id),
+    verifiedMembers = [];
+    unverifiedMembers = [];
+    let membersQuery = query(
+      $mt.userCollection,
+      where("teamId", "==", $mt.teamDocument.id),
       orderBy("name")
     );
-    getDocs(q).then((querySnapshot) => {
+    getDocs(membersQuery).then((querySnapshot) => {
       querySnapshot.forEach((memberDoc) => {
-        if (teamData.members.includes(memberDoc.id)) {
-          members = [...members, memberDoc.data()];
+        if ($mt.teamData.members.includes(memberDoc.id)) {
+          verifiedMembers = [...verifiedMembers, memberDoc.data()];
         } else {
-          unverifieds = [...unverifieds, memberDoc.data()];
+          unverifiedMembers = [...unverifiedMembers, memberDoc.data()];
         }
       });
     });
   }
 
   function verifyMember(member: UserData) {
-    if (!teamData.members.includes(member.id)) {
-      members.push(member);
-      members = members.sort((a, b) => (a.name > b.name ? 1 : -1));
-      unverifieds = unverifieds.filter((m) => m.id != member.id);
-      teamData.members.push(member.id);
-      setDoc(teamDoc, teamData).catch(console.error);
+    if (!$mt.teamData.members.includes(member.id)) {
+      verifiedMembers.push(member);
+      verifiedMembers = verifiedMembers.sort((a, b) =>
+        a.name > b.name ? 1 : -1
+      );
+      unverifiedMembers = unverifiedMembers.filter((m) => m.id != member.id);
+      $mt.teamData.members.push(member.id);
+      updateDoc($mt.teamDocument, {
+        members: $mt.teamData.members,
+      }).catch(console.error);
     }
   }
 
   function unverifyMember(member: UserData) {
-    unverifieds.push(member);
-    unverifieds = unverifieds.sort((a, b) => (a.name > b.name ? 1 : -1));
-    members = members.filter((m) => m.id != member.id);
-    teamData.members = teamData.members.filter((m) => m != member.id);
-    setDoc(teamDoc, teamData).catch(console.error);
+    unverifiedMembers.push(member);
+    unverifiedMembers = unverifiedMembers.sort((a, b) =>
+      a.name > b.name ? 1 : -1
+    );
+    verifiedMembers = verifiedMembers.filter((m) => m.id != member.id);
+    $mt.teamData.members = $mt.teamData.members.filter((m) => m != member.id);
+    updateDoc($mt.teamDocument, {
+      members: $mt.teamData.members,
+    }).catch(console.error);
   }
 
   function deleteTeam() {
     if (confirm("Are you sure?")) {
-      deleteDoc(teamDoc)
+      deleteDoc($mt.teamDocument)
         .then(() => {
-          teamData = null;
-          userData.teamId = "";
-          setDoc(userDoc, userData).catch(console.error);
+          $mt.teamData = null;
+          $mt.userData.teamId = "";
+          updateDoc($mt.userDocument, {
+            teamId: $mt.userData.id,
+          }).catch(console.error);
         })
         .catch(console.error);
     }
@@ -81,16 +89,21 @@
 
   function leaveTeam() {
     if (confirm("Are you sure?")) {
-      userData.teamId = "";
-      setDoc(userDoc, userData).catch(console.error);
+      $mt.teamData = null;
+      $mt.userData.teamId = "";
+      updateDoc($mt.userDocument, {
+        teamId: $mt.userData.id,
+      }).catch(console.error);
     }
   }
 </script>
 
-<h2>Team {teamData.number}</h2>
-<p>{teamData.name}</p>
-{#if userData.id == teamData.ownerId}
+<h2>Team {$mt.teamData.number}</h2>
+<p>{$mt.teamData.name}</p>
+<p>Goal: {$mt.teamData.goal} hours</p>
+{#if $mt.userData.id == $mt.teamData.ownerId}
   <p>
+    <button on:click={editGoal}>Edit goal</button>
     <button on:click={copyTeamId}>Copy id</button>
     <button on:click={refreshMembers}>Refresh</button>
   </p>
@@ -102,7 +115,7 @@
         <th>Hours</th>
         <th>Actions</th>
       </tr>
-      {#each members as member}
+      {#each verifiedMembers as member}
         <tr>
           <td>{member.name}</td>
           <td>{member.hours.toFixed(2)}</td>
@@ -120,11 +133,11 @@
         <th>Name</th>
         <th>Actions</th>
       </tr>
-      {#each unverifieds as unverified}
+      {#each unverifiedMembers as member}
         <tr>
-          <td>{unverified.name}</td>
+          <td>{member.name}</td>
           <td>
-            <button on:click={() => verifyMember(unverified)}>Verify</button>
+            <button on:click={() => verifyMember(member)}>Verify</button>
           </td>
         </tr>
       {/each}
@@ -132,7 +145,7 @@
   </details>
   <p><button on:click={deleteTeam}>Delete team</button></p>
 {:else}
-  {#if !teamData.members.includes(userData.id)}
+  {#if !$mt.teamData.members.includes($mt.userData.id)}
     <p>UNVERIFIED</p>
   {/if}
   <p><button on:click={leaveTeam}>Leave team</button></p>

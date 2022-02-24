@@ -1,23 +1,16 @@
 <script lang="ts">
-  import { initializeApp, FirebaseApp, FirebaseOptions } from "firebase/app";
-  import { getAuth, Auth, onAuthStateChanged, User } from "firebase/auth";
+  import { FirebaseApp, FirebaseOptions, initializeApp } from "firebase/app";
+  import { getAuth, onAuthStateChanged, User } from "firebase/auth";
   import {
-    doc,
-    setDoc,
-    getFirestore,
-    Firestore,
-    DocumentReference,
-    getDoc,
     collection,
-    CollectionReference,
+    doc,
+    Firestore,
+    getDoc,
+    getFirestore,
+    setDoc,
     Timestamp,
   } from "firebase/firestore";
-  import {
-    UserData,
-    TeamData,
-    userDataConv,
-    teamDataConv,
-  } from "./Global.svelte";
+  import { convertTeamData, convertUserData, mt } from "./Global.svelte";
   import TeamMenu from "./TeamMenu.svelte";
   import TeamlessMenu from "./TeamlessMenu.svelte";
   import UserMenu from "./UserMenu.svelte";
@@ -32,41 +25,34 @@
   };
 
   let firebaseApp: FirebaseApp;
-  let auth: Auth;
   let firestore: Firestore;
-
-  let userData: UserData;
-  let userDoc: DocumentReference<UserData>;
-  let usersColl: CollectionReference<UserData>;
-
-  let teamData: TeamData;
-  let teamDoc: DocumentReference<TeamData>;
-  let teamsColl: CollectionReference<TeamData>;
 
   let loaded = false;
 
-  function loadTeamDoc(id: string) {
-    teamDoc = doc(teamsColl, id).withConverter(teamDataConv);
-    getDoc(teamDoc)
+  function loadTeamDocument(id: string) {
+    $mt.teamDocument = doc($mt.teamCollection, id).withConverter(
+      convertTeamData
+    );
+    getDoc($mt.teamDocument)
       .then((teamSnapshot) => {
-        teamData = teamSnapshot.data();
+        $mt.teamData = teamSnapshot.data();
         loaded = true;
       })
       .catch(console.error);
   }
 
-  function loadUserDoc(userAccount: User) {
-    getDoc(userDoc)
+  function loadUserDocument(userAccount: User) {
+    getDoc($mt.userDocument)
       .then((userSnapshot) => {
         if (userSnapshot.exists()) {
-          userData = userSnapshot.data();
-          if (userData.teamId) {
-            loadTeamDoc(userData.teamId);
+          $mt.userData = userSnapshot.data();
+          if ($mt.userData.teamId) {
+            loadTeamDocument($mt.userData.teamId);
           } else {
             loaded = true;
           }
         } else {
-          userData = {
+          $mt.userData = {
             id: userAccount.uid,
             hours: 0,
             lastAction: new Timestamp(0, 0),
@@ -75,28 +61,34 @@
             tracking: false,
           };
           loaded = true;
-          setDoc(userDoc, userData).catch(console.error);
+          setDoc($mt.userDocument, $mt.userData).catch(console.error);
         }
       })
       .catch(console.error);
   }
 
   firebaseApp = initializeApp(firebaseConfig);
-  auth = getAuth(firebaseApp);
+  $mt.auth = getAuth(firebaseApp);
   firestore = getFirestore(firebaseApp);
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged($mt.auth, (user) => {
     if (user) {
-      usersColl = collection(firestore, "users").withConverter(userDataConv);
-      teamsColl = collection(firestore, "teams").withConverter(teamDataConv);
-      userDoc = doc(usersColl, user.uid).withConverter(userDataConv);
-      loadUserDoc(user);
+      $mt.userCollection = collection(firestore, "users").withConverter(
+        convertUserData
+      );
+      $mt.teamCollection = collection(firestore, "teams").withConverter(
+        convertTeamData
+      );
+      $mt.userDocument = doc($mt.userCollection, user.uid).withConverter(
+        convertUserData
+      );
+      loadUserDocument(user);
     } else {
-      usersColl = null;
-      teamsColl = null;
-      userDoc = null;
-      teamDoc = null;
-      userData = null;
-      teamData = null;
+      $mt.userCollection = null;
+      $mt.teamCollection = null;
+      $mt.userDocument = null;
+      $mt.teamDocument = null;
+      $mt.userData = null;
+      $mt.teamData = null;
       loaded = true;
     }
   });
@@ -106,22 +98,10 @@
   <h1>MeanTrack</h1>
 </header>
 {#if loaded}
-  <UserMenu bind:auth bind:userData bind:userDoc />
-  {#if teamData}
-    <TeamMenu
-      bind:userData
-      bind:userDoc
-      bind:usersColl
-      bind:teamData
-      bind:teamDoc
-    />
-  {:else if userData}
-    <TeamlessMenu
-      bind:userData
-      bind:userDoc
-      bind:teamData
-      bind:teamDoc
-      bind:teamsColl
-    />
+  <UserMenu />
+  {#if $mt.teamData}
+    <TeamMenu />
+  {:else if $mt.userData}
+    <TeamlessMenu />
   {/if}
 {/if}

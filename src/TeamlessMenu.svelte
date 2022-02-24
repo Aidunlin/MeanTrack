@@ -1,32 +1,23 @@
 <script lang="ts">
-  import {
-    CollectionReference,
-    doc,
-    DocumentReference,
-    getDoc,
-    setDoc,
-  } from "firebase/firestore";
-  import { UserData, TeamData, teamDataConv } from "./Global.svelte";
-
-  export let userData: UserData;
-  export let userDoc: DocumentReference<UserData>;
-
-  export let teamData: TeamData;
-  export let teamDoc: DocumentReference<TeamData>;
-  export let teamsColl: CollectionReference<TeamData>;
+  import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+  import { convertTeamData, mt } from "./Global.svelte";
 
   let joinTeamId: string;
   let createTeamName: string;
   let createTeamNumber: number;
 
   function joinTeam() {
-    teamDoc = doc(teamsColl, joinTeamId).withConverter(teamDataConv);
-    getDoc(teamDoc)
+    $mt.teamDocument = doc($mt.teamCollection, joinTeamId).withConverter(
+      convertTeamData
+    );
+    getDoc($mt.teamDocument)
       .then((teamSnapshot) => {
         if (teamSnapshot.exists()) {
-          teamData = teamSnapshot.data();
-          userData.teamId = teamData.id;
-          setDoc(userDoc, userData).catch(console.error);
+          $mt.teamData = teamSnapshot.data();
+          $mt.userData.teamId = $mt.teamData.id;
+          updateDoc($mt.userDocument, {
+            teamId: $mt.userData.teamId,
+          }).catch(console.error);
         }
       })
       .catch(console.error);
@@ -34,18 +25,21 @@
 
   function createTeam() {
     if (createTeamName && createTeamNumber) {
-      teamDoc = doc(teamsColl).withConverter(teamDataConv);
-      teamData = {
-        id: teamDoc.id,
+      $mt.teamDocument = doc($mt.teamCollection).withConverter(convertTeamData);
+      $mt.teamData = {
+        id: $mt.teamDocument.id,
+        goal: 0,
         name: createTeamName,
         number: createTeamNumber,
-        members: [userData.id],
-        ownerId: userData.id,
+        members: [$mt.userData.id],
+        ownerId: $mt.userData.id,
       };
-      setDoc(teamDoc, teamData)
+      setDoc($mt.teamDocument, $mt.teamData)
         .then(() => {
-          userData.teamId = teamDoc.id;
-          setDoc(userDoc, userData).catch(console.error);
+          $mt.userData.teamId = $mt.teamDocument.id;
+          updateDoc($mt.userDocument, {
+            teamId: $mt.userData.teamId,
+          }).catch(console.error);
         })
         .catch(console.error);
     }
