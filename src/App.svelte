@@ -24,6 +24,7 @@
     query,
     where,
     getDocs,
+    orderBy,
   } from "firebase/firestore";
 
   const firebaseConfig: FirebaseOptions = {
@@ -112,10 +113,18 @@
   let createTeamName: string;
   let createTeamNumber: number;
 
+  let teamMembers: UserData[] = [];
+  let unverifiedMembers: UserData[] = [];
+
   function loadTeamDoc(id: string) {
     teamDoc = doc(teamsColl, id).withConverter(teamDataConv);
     getDoc(teamDoc)
-      .then((teamSnapshot) => (teamData = teamSnapshot.data()))
+      .then((teamSnapshot) => {
+        teamData = teamSnapshot.data();
+        if (teamData.ownerId == userData.id) {
+          refreshMembers();
+        }
+      })
       .catch(console.error);
   }
 
@@ -193,46 +202,16 @@
     }
   }
 
-  let teamMembers: UserData[] = [];
-
-  function getTeamMembers() {
-    teamMembers = [];
-    const q = query(usersColl, where("teamId", "==", teamDoc.id));
-
-    getDocs(q).then((query) => {
-      query.forEach((memberDoc) => {
-        if (teamData.members.includes(memberDoc.id)) {
-          teamMembers = [...teamMembers, memberDoc.data()];
-        }
-      });
-    });
-  }
-
-  let unverifiedMembers: UserData[] = [];
-
-  function getUnverifiedMembers() {
-    unverifiedMembers = [];
-    const q = query(usersColl, where("teamId", "==", teamDoc.id));
-
-    getDocs(q).then((query) => {
-      query.forEach((memberDoc) => {
-        if (!teamData.members.includes(memberDoc.id)) {
-          unverifiedMembers = [...unverifiedMembers, memberDoc.data()];
-        }
-      });
-    });
-  }
-
   function verifyMember(id: string) {
     if (!teamData.members.includes(id)) {
       teamData.members.push(id);
-      setDoc(teamDoc, teamData)
-        .then(() => {
-          getTeamMembers();
-          getUnverifiedMembers();
-        })
-        .catch(console.error);
+      setDoc(teamDoc, teamData).then(refreshMembers).catch(console.error);
     }
+  }
+
+  function unverifyMember(id: string) {
+    teamData.members = teamData.members.filter((member) => member != id);
+    setDoc(teamDoc, teamData).then(refreshMembers).catch(console.error);
   }
 
   function deleteTeam() {
@@ -247,7 +226,12 @@
     }
   }
 
-  function leaveTeam() {}
+  function leaveTeam() {
+    if (confirm("Are you sure?")) {
+      userData.teamId = "";
+      setDoc(userDoc, userData).catch(console.error);
+    }
+  }
 
   firebaseApp = initializeApp(firebaseConfig);
   auth = getAuth(firebaseApp);
@@ -267,72 +251,106 @@
       teamData = null;
     }
   });
+
+  function copyTeamId() {
+    if ("clipboard" in navigator) {
+      navigator.clipboard.writeText(teamData.id);
+      alert("Copied!");
+    } else {
+      prompt("Copy the id:", teamData.id);
+    }
+  }
+
+  function refreshMembers() {
+    teamMembers = [];
+    unverifiedMembers = [];
+    let q = query(
+      usersColl,
+      where("teamId", "==", teamDoc.id),
+      orderBy("name")
+    );
+    getDocs(q).then((querySnapshot) => {
+      querySnapshot.forEach((memberDoc) => {
+        if (teamData.members.includes(memberDoc.id)) {
+          teamMembers = [...teamMembers, memberDoc.data()];
+        } else {
+          unverifiedMembers = [...unverifiedMembers, memberDoc.data()];
+        }
+      });
+    });
+  }
 </script>
 
 <header>
   <h1>MeanTrack</h1>
-  {#if userData}
-    <button on:click={logout}>Sign out</button>
-  {:else}
-    <button on:click={login}>Sign in</button>
-  {/if}
 </header>
 {#if userData}
-  <h2>You</h2>
-  <p>{userData.name}</p>
-  <p>Hours: <code>{userData.hours.toFixed(2)}</code></p>
+  <h2>{userData.name}</h2>
+  <p>Hours: {userData.hours.toFixed(2)}</p>
   {#if userData.lastAction.toMillis()}
     <p>
-      <span>{userData.tracking ? "Started:" : "Stopped:"}</span>
-      <code>
-        {userData.lastAction.toDate().toLocaleString(undefined, {
-          dateStyle: "short",
-          timeStyle: "short",
-        })}
-      </code>
+      {userData.tracking ? "Started:" : "Stopped:"}
+      {userData.lastAction.toDate().toLocaleString(undefined, {
+        dateStyle: "short",
+        timeStyle: "short",
+      })}
     </p>
   {/if}
   <p>
     <button on:click={toggleTracking}>
       {userData.tracking ? "Stop" : "Start"} tracking
     </button>
+    <button on:click={logout}>Sign out</button>
   </p>
-  <h2>Team</h2>
   {#if teamData}
-    <p>{teamData.name}: <code>{teamData.number}</code></p>
+    <h2>Team {teamData.number}</h2>
+    <p>{teamData.name}</p>
     {#if userData.id == teamData.ownerId}
-      <p>You own this team.</p>
-      <p><button on:click={deleteTeam}>Delete team</button></p>
-      <h3>Members</h3>
-      <p><button on:click={getTeamMembers}>Refresh</button></p>
-      {#if teamMembers.length}
-        <ul>
+      <p>
+        <button on:click={copyTeamId}>Copy id</button>
+        <button on:click={refreshMembers}>Refresh</button>
+      </p>
+      <details open>
+        <summary>Members</summary>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Hours</th>
+            <th>Actions</th>
+          </tr>
           {#each teamMembers as member}
-            <li>
-              {member.name}
-              <br />
-              Hours: <code>{member.hours.toFixed(2)}</code>
-            </li>
+            <tr>
+              <td>{member.name}</td>
+              <td>{member.hours.toFixed(2)}</td>
+              <td>
+                <button on:click={() => unverifyMember(member.id)}>
+                  Unverify
+                </button>
+              </td>
+            </tr>
           {/each}
-        </ul>
-      {:else}
-        <p>Team members will be listed here.</p>
-      {/if}
-      <h3>Unverified</h3>
-      <p><button on:click={getUnverifiedMembers}>Refresh</button></p>
-      {#if unverifiedMembers.length}
-        <ul>
+        </table>
+      </details>
+      <details>
+        <summary>Unverified</summary>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Actions</th>
+          </tr>
           {#each unverifiedMembers as member}
-            <li>
-              {member.name}
-              <br />
-              <button on:click={() => verifyMember(member.id)}>Verify</button>
-            </li>
+            <tr>
+              <td>{member.name}</td>
+              <td>
+                <button on:click={() => verifyMember(member.id)}>
+                  Verify
+                </button>
+              </td>
+            </tr>
           {/each}
-        </ul>
-      {:else}
-        <p>Unverified members will be listed here.</p>
-      {/if}
+        </table>
+      </details>
+      <p><button on:click={deleteTeam}>Delete team</button></p>
     {:else}
       {#if !teamData.members.includes(userData.id)}
         <p>UNVERIFIED</p>
@@ -340,7 +358,7 @@
       <p><button on:click={leaveTeam}>Leave team</button></p>
     {/if}
   {:else}
-    <details>
+    <details open>
       <summary>Join a team</summary>
       <label>
         Team id
@@ -365,4 +383,6 @@
       <p><button on:click={createTeam}>Create</button></p>
     </details>
   {/if}
+{:else}
+  <p><button on:click={login}>Sign in</button></p>
 {/if}
