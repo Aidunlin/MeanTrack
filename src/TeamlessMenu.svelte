@@ -46,6 +46,7 @@
   }
 </script>
 
+<h2>Team</h2>
 <details open>
   <summary>Join a team</summary>
   <label>

@@ -31,7 +31,7 @@
 
 {#if $mt.userData}
   <h2>{$mt.userData.name}</h2>
-  <p>Hours: {$mt.userData.hours.toFixed(2)}</p>
+  <p>Hours: {$mt.userData.hours.toFixed(1)}</p>
   {#if $mt.userData.lastAction.toMillis()}
     <p>
       {$mt.userData.tracking ? "Started:" : "Stopped:"}

@@ -105,3 +105,18 @@
     <TeamlessMenu />
   {/if}
 {/if}
+<br />
+<hr />
+<footer>
+  <h2>About</h2>
+  <p>
+    <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">MeanTrack</a>
+    is a work-in-progress FRC team hour tracking web app.
+  </p>
+  <p>
+    Powered by
+    <a href="https://firebase.google.com/" target="_blank">Firebase</a>,
+    <a href="https://svelte.dev/" target="_blank">Svelte</a>,
+    and <a href="https://newcss.net/" target="_blank">new.css</a>!
+  </p>
+</footer>
