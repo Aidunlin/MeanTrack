@@ -11,10 +11,14 @@
 
   let verifiedMembers: UserData[] = [];
   let unverifiedMembers: UserData[] = [];
+  let selectedVerifiedIds: string[] = [];
+  let selectedUnverifiedIds: string[] = [];
 
   function refreshMembers() {
     verifiedMembers = [];
     unverifiedMembers = [];
+    selectedVerifiedIds = [];
+    selectedUnverifiedIds = [];
     let membersQuery = query(
       $mt.userCollection,
       where("teamId", "==", $mt.teamDocument.id),
@@ -64,27 +68,39 @@
     }
   }
 
-  function verifyMember(member: UserData) {
-    if (!$mt.teamData.members.includes(member.id)) {
-      verifiedMembers.push(member);
-      verifiedMembers = verifiedMembers.sort((a, b) =>
-        a.name > b.name ? 1 : -1
-      );
-      unverifiedMembers = unverifiedMembers.filter((m) => m.id != member.id);
-      $mt.teamData.members.push(member.id);
-      updateDoc($mt.teamDocument, {
-        members: $mt.teamData.members,
-      }).catch(console.error);
-    }
-  }
-
-  function unverifyMember(member: UserData) {
-    unverifiedMembers.push(member);
+  function unverifyMembers() {
+    let selectedMembers = verifiedMembers.filter((member) =>
+      selectedVerifiedIds.includes(member.id)
+    );
+    unverifiedMembers.push(...selectedMembers);
     unverifiedMembers = unverifiedMembers.sort((a, b) =>
       a.name > b.name ? 1 : -1
     );
-    verifiedMembers = verifiedMembers.filter((m) => m.id != member.id);
-    $mt.teamData.members = $mt.teamData.members.filter((m) => m != member.id);
+    verifiedMembers = verifiedMembers.filter(
+      (member) => !selectedVerifiedIds.includes(member.id)
+    );
+    $mt.teamData.members = $mt.teamData.members.filter(
+      (memberId) => !selectedVerifiedIds.includes(memberId)
+    );
+    selectedVerifiedIds = [];
+    updateDoc($mt.teamDocument, {
+      members: $mt.teamData.members,
+    }).catch(console.error);
+  }
+
+  function verifyMembers() {
+    let selectedMembers = unverifiedMembers.filter((member) =>
+      selectedUnverifiedIds.includes(member.id)
+    );
+    verifiedMembers.push(...selectedMembers);
+    verifiedMembers = verifiedMembers.sort((a, b) =>
+      a.name > b.name ? 1 : -1
+    );
+    unverifiedMembers = unverifiedMembers.filter(
+      (member) => !selectedUnverifiedIds.includes(member.id)
+    );
+    $mt.teamData.members.push(...selectedUnverifiedIds);
+    selectedUnverifiedIds = [];
     updateDoc($mt.teamDocument, {
       members: $mt.teamData.members,
     }).catch(console.error);
@@ -114,40 +130,62 @@
     <button on:click={deleteTeam}>Delete team</button>
   </p>
   <h3>Members</h3>
+  <p>
+    <button on:click={unverifyMembers} disabled={!selectedVerifiedIds.length}>
+      Unverify
+    </button>
+  </p>
   <table>
     <thead>
       <tr>
         <th>Name</th>
         <th>Hours</th>
-        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       {#each verifiedMembers as member (member.id)}
         <tr>
-          <td>{member.name}</td>
-          <td>{member.hours.toFixed(1)}</td>
           <td>
-            <button on:click={() => unverifyMember(member)}>Unverify</button>
+            <label>
+              <input
+                type="checkbox"
+                bind:group={selectedVerifiedIds}
+                name="verified-members"
+                value={member.id}
+              />
+              {member.name}
+            </label>
           </td>
+          <td>{member.hours.toFixed(1)}</td>
         </tr>
       {/each}
     </tbody>
   </table>
   <h3>Unverified</h3>
+  <p>
+    <button on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>
+      Verify
+    </button>
+  </p>
   <table>
     <thead>
       <tr>
         <th>Name</th>
-        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       {#each unverifiedMembers as member (member.id)}
         <tr>
-          <td>{member.name}</td>
           <td>
-            <button on:click={() => verifyMember(member)}>Verify</button>
+            <label>
+              <input
+                type="checkbox"
+                bind:group={selectedUnverifiedIds}
+                name="unverified-members"
+                value={member.id}
+              />
+              {member.name}
+            </label>
           </td>
         </tr>
       {/each}
