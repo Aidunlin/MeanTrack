@@ -8,9 +8,15 @@
     getDoc,
     getFirestore,
     setDoc,
-    Timestamp,
   } from "firebase/firestore";
-  import { convertTeamData, convertUserData, mt } from "./Global.svelte";
+  import {
+    convertMemberData,
+    convertTeamData,
+    convertTeamPrivateData,
+    convertUnverifiedData,
+    convertUserData,
+    mt,
+  } from "./Global.svelte";
   import TeamMenu from "./TeamMenu.svelte";
   import TeamlessMenu from "./TeamlessMenu.svelte";
   import UserMenu from "./UserMenu.svelte";
@@ -29,42 +35,63 @@
 
   let loaded = false;
 
-  function loadTeamDocument(id: string) {
-    $mt.teamDocument = doc($mt.teamCollection, id).withConverter(
-      convertTeamData
-    );
-    getDoc($mt.teamDocument)
-      .then((teamSnapshot) => {
-        $mt.teamData = teamSnapshot.data();
-        loaded = true;
-      })
-      .catch(console.error);
+  async function loadTeam(id: string) {
+    $mt.team.document = doc($mt.team.collection, id);
+    $mt.team.data = (await getDoc($mt.team.document)).data();
+
+    $mt.team.unverified.collection = collection(
+      $mt.team.document,
+      "unverified"
+    ).withConverter(convertUnverifiedData);
+    $mt.team.unverified.document = doc(
+      $mt.team.unverified.collection,
+      "unverified"
+    ).withConverter(convertUnverifiedData);
+    $mt.team.unverified.data = (
+      await getDoc($mt.team.unverified.document)
+    ).data();
+
+    if (
+      !$mt.team.unverified.data ||
+      $mt.user.data.id == $mt.team.data.ownerId
+    ) {
+      $mt.team.private.document = doc(
+        $mt.team.document,
+        "private/data"
+      ).withConverter(convertTeamPrivateData);
+      $mt.team.private.data = (await getDoc($mt.team.private.document)).data();
+
+      $mt.team.member.collection = collection(
+        $mt.team.document,
+        "members"
+      ).withConverter(convertMemberData);
+      $mt.team.member.document = doc(
+        $mt.team.member.collection,
+        $mt.user.data.id
+      );
+      $mt.team.member.data = (await getDoc($mt.team.member.document)).data();
+    }
+
+    loaded = true;
   }
 
-  function loadUserDocument(userAccount: User) {
-    getDoc($mt.userDocument)
-      .then((userSnapshot) => {
-        if (userSnapshot.exists()) {
-          $mt.userData = userSnapshot.data();
-          if ($mt.userData.teamId) {
-            loadTeamDocument($mt.userData.teamId);
-          } else {
-            loaded = true;
-          }
-        } else {
-          $mt.userData = {
-            id: userAccount.uid,
-            hours: 0,
-            lastAction: new Timestamp(0, 0),
-            name: userAccount.displayName,
-            teamId: "",
-            tracking: false,
-          };
-          loaded = true;
-          setDoc($mt.userDocument, $mt.userData).catch(console.error);
-        }
-      })
-      .catch(console.error);
+  async function loadUser(userAccount: User) {
+    let snapshot = await getDoc($mt.user.document);
+    if (snapshot.exists()) {
+      $mt.user.data = snapshot.data();
+      if ($mt.user.data.teamId) {
+        await loadTeam($mt.user.data.teamId);
+      } else {
+        loaded = true;
+      }
+    } else {
+      $mt.user.data = {
+        id: userAccount.uid,
+        teamId: "",
+      };
+      loaded = true;
+      await setDoc($mt.user.document, $mt.user.data).catch(console.error);
+    }
   }
 
   firebaseApp = initializeApp(firebaseConfig);
@@ -72,51 +99,85 @@
   firestore = getFirestore(firebaseApp);
   onAuthStateChanged($mt.auth, (user) => {
     if (user) {
-      $mt.userCollection = collection(firestore, "users").withConverter(
+      $mt.user.collection = collection(firestore, "users").withConverter(
         convertUserData
       );
-      $mt.teamCollection = collection(firestore, "teams").withConverter(
+      $mt.team.collection = collection(firestore, "teams").withConverter(
         convertTeamData
       );
-      $mt.userDocument = doc($mt.userCollection, user.uid).withConverter(
+      $mt.user.document = doc($mt.user.collection, user.uid).withConverter(
         convertUserData
       );
-      loadUserDocument(user);
+      loadUser(user);
     } else {
-      $mt.userCollection = null;
-      $mt.teamCollection = null;
-      $mt.userDocument = null;
-      $mt.teamDocument = null;
-      $mt.userData = null;
-      $mt.teamData = null;
+      $mt = {
+        auth: null,
+        user: {
+          data: null,
+          document: null,
+          collection: null,
+        },
+        team: {
+          data: null,
+          document: null,
+          collection: null,
+          private: {
+            data: null,
+            document: null,
+          },
+          member: {
+            data: null,
+            document: null,
+            collection: null,
+          },
+          unverified: {
+            data: null,
+            document: null,
+            collection: null,
+          },
+        },
+      };
       loaded = true;
     }
   });
+
+  const links = {
+    github: "https://github.com/Aidunlin/MeanTrack",
+    googleDoc:
+      "https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/edit#",
+    firebase: "https://firebase.google.com/",
+    svelte: "https://svelte.dev/",
+    newcss: "https://newcss.net/",
+  };
 </script>
 
 <header>
   <h1>MeanTrack</h1>
+  <p>A work-in-progress FRC hour tracking web app</p>
 </header>
 {#if loaded}
   <UserMenu />
-  {#if $mt.teamData}
+  {#if $mt.team.data}
     <TeamMenu />
-  {:else if $mt.userData}
+  {:else if $mt.user.data}
     <TeamlessMenu />
   {/if}
 {/if}
 <br />
 <hr />
 <footer>
-  <h2>About</h2>
   <p>
-    <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">MeanTrack</a>
-    is a work-in-progress FRC team hour tracking web app.
+    View
+    <a href={links.github} target="_blank">GitHub Repo</a>
+    /
+    <a href={links.googleDoc} target="_blank">Google Doc</a>
   </p>
   <p>
     Powered by
-    <a href="https://firebase.google.com/" target="_blank">Firebase</a>,
-    <a href="https://svelte.dev/" target="_blank">Svelte</a>,
-    and <a href="https://newcss.net/" target="_blank">new.css</a>!
+    <a href={links.firebase} target="_blank">Firebase</a>
+    /
+    <a href={links.svelte} target="_blank">Svelte</a>
+    /
+    <a href={links.newcss} target="_blank">new.css</a>
   </p>
 </footer>

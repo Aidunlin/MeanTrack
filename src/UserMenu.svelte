@@ -5,16 +5,17 @@
 
   function toggleTracking() {
     let newAction = Timestamp.now();
-    let difference = newAction.toMillis() - $mt.userData.lastAction.toMillis();
-    if ($mt.userData.tracking) {
-      $mt.userData.hours += difference / 1000 / 3600;
+    let difference =
+      newAction.toMillis() - $mt.team.member.data.lastAction.toMillis();
+    if ($mt.team.member.data.tracking) {
+      $mt.team.member.data.hours += difference / 1000 / 3600;
     }
-    $mt.userData.tracking = !$mt.userData.tracking;
-    $mt.userData.lastAction = newAction;
-    updateDoc($mt.userDocument, {
-      hours: $mt.userData.hours,
-      tracking: $mt.userData.tracking,
-      lastAction: $mt.userData.lastAction,
+    $mt.team.member.data.tracking = !$mt.team.member.data.tracking;
+    $mt.team.member.data.lastAction = newAction;
+    updateDoc($mt.team.member.document, {
+      hours: $mt.team.member.data.hours,
+      tracking: $mt.team.member.data.tracking,
+      lastAction: $mt.team.member.data.lastAction,
     }).catch(console.error);
   }
 
@@ -29,13 +30,13 @@
   }
 </script>
 
-{#if $mt.userData}
-  <h2>{$mt.userData.name}</h2>
-  <p>Hours: {$mt.userData.hours.toFixed(1)}</p>
-  {#if $mt.userData.lastAction.toMillis()}
+{#if $mt.team.member.data}
+  <h2>{$mt.team.member.data.name}</h2>
+  <p>Hours: {$mt.team.member.data.hours.toFixed(1)}</p>
+  {#if $mt.team.member.data.lastAction.toMillis()}
     <p>
-      {$mt.userData.tracking ? "Started:" : "Stopped:"}
-      {$mt.userData.lastAction.toDate().toLocaleString(undefined, {
+      {$mt.team.member.data.tracking ? "Started:" : "Stopped:"}
+      {$mt.team.member.data.lastAction.toDate().toLocaleString(undefined, {
         dateStyle: "short",
         timeStyle: "short",
       })}
@@ -43,10 +44,12 @@
   {/if}
   <p>
     <button on:click={toggleTracking}>
-      {$mt.userData.tracking ? "Stop" : "Start"} tracking
+      {$mt.team.member.data.tracking ? "Stop" : "Start"} tracking
     </button>
-    <button on:click={logout}>Sign out</button>
   </p>
+{/if}
+{#if $mt.user.data}
+  <p><button on:click={logout}>Sign out</button></p>
 {:else}
   <p><button on:click={login}>Sign in</button></p>
 {/if}

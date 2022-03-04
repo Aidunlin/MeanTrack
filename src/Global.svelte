@@ -10,84 +10,170 @@
 
   export interface UserData {
     id: string;
-    hours: number;
-    lastAction: Timestamp;
-    name: string;
     teamId: string;
-    tracking: boolean;
   }
 
   export interface TeamData {
     id: string;
-    members: string[];
-    goal: number;
     name: string;
     number: number;
     ownerId: string;
   }
 
+  export interface TeamPrivateData {
+    goal: number;
+  }
+
+  export interface MemberData {
+    id: string;
+    hours: number;
+    lastAction: Timestamp;
+    name: string;
+    tracking: boolean;
+  }
+
+  export interface UnverifiedData {
+    id: string;
+    name: string;
+  }
+
   export interface MT {
     auth: Auth;
-    userData: UserData;
-    userDocument: DocumentReference<UserData>;
-    userCollection: CollectionReference<UserData>;
-    teamData: TeamData;
-    teamDocument: DocumentReference<TeamData>;
-    teamCollection: CollectionReference<TeamData>;
+    user: {
+      data: UserData;
+      document: DocumentReference<UserData>;
+      collection: CollectionReference<UserData>;
+    };
+    team: {
+      data: TeamData;
+      document: DocumentReference<TeamData>;
+      collection: CollectionReference<TeamData>;
+      private: {
+        data: TeamPrivateData;
+        document: DocumentReference<TeamPrivateData>;
+      };
+      member: {
+        data: MemberData;
+        document: DocumentReference<MemberData>;
+        collection: CollectionReference<MemberData>;
+      };
+      unverified: {
+        data: UnverifiedData;
+        document: DocumentReference<UnverifiedData>;
+        collection: CollectionReference<UnverifiedData>;
+      };
+    };
   }
 
   export const mt = writable<MT>({
     auth: null,
-    userData: null,
-    userDocument: null,
-    userCollection: null,
-    teamData: null,
-    teamDocument: null,
-    teamCollection: null,
+    user: {
+      data: null,
+      document: null,
+      collection: null,
+    },
+    team: {
+      data: null,
+      document: null,
+      collection: null,
+      private: {
+        data: null,
+        document: null,
+      },
+      member: {
+        data: null,
+        document: null,
+        collection: null,
+      },
+      unverified: {
+        data: null,
+        document: null,
+        collection: null,
+      },
+    },
   });
 
   export const convertUserData: FirestoreDataConverter<UserData> = {
-    toFirestore: (data: UserData) => {
+    toFirestore: (user: UserData) => {
       return {
-        hours: data.hours,
-        lastAction: data.lastAction,
-        name: data.name,
-        teamId: data.teamId,
-        tracking: data.tracking,
+        teamId: user.teamId,
       };
     },
     fromFirestore: (snapshot, options) => {
       const user = snapshot.data(options);
       return {
         id: snapshot.id,
-        hours: user.hours,
-        lastAction: user.lastAction,
-        name: user.name,
         teamId: user.teamId,
-        tracking: user.tracking,
       };
     },
   };
 
   export const convertTeamData: FirestoreDataConverter<TeamData> = {
-    toFirestore: (data: TeamData) => {
+    toFirestore: (team: TeamData) => {
       return {
-        goal: data.goal,
-        members: data.members,
-        name: data.name,
-        number: data.number,
-        ownerId: data.ownerId,
+        name: team.name,
+        number: team.number,
+        ownerId: team.ownerId,
       };
     },
     fromFirestore: (snapshot, options) => {
       const team = snapshot.data(options);
       return {
         id: snapshot.id,
-        goal: team.goal,
-        members: team.members,
         name: team.name,
         number: team.number,
         ownerId: team.ownerId,
+      };
+    },
+  };
+
+  export const convertTeamPrivateData: FirestoreDataConverter<TeamPrivateData> =
+    {
+      toFirestore: (team: TeamPrivateData) => {
+        return {
+          goal: team.goal,
+        };
+      },
+      fromFirestore: (snapshot, options) => {
+        const team = snapshot.data(options);
+        return {
+          goal: team.goal,
+        };
+      },
+    };
+
+  export const convertMemberData: FirestoreDataConverter<MemberData> = {
+    toFirestore: (member: MemberData) => {
+      return {
+        hours: member.hours,
+        lastAction: member.lastAction,
+        name: member.name,
+        tracking: member.tracking,
+      };
+    },
+    fromFirestore: (snapshot, options) => {
+      const member = snapshot.data(options);
+      return {
+        id: snapshot.id,
+        hours: member.hours,
+        lastAction: member.lastAction,
+        name: member.name,
+        tracking: member.tracking,
+      };
+    },
+  };
+
+  export const convertUnverifiedData: FirestoreDataConverter<UnverifiedData> = {
+    toFirestore: (unverified: UnverifiedData) => {
+      return {
+        name: unverified.name,
+      };
+    },
+    fromFirestore: (snapshot, options) => {
+      const unverified = snapshot.data(options);
+      return {
+        id: snapshot.id,
+        name: unverified.name,
       };
     },
   };
