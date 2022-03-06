@@ -21,6 +21,15 @@
   import TeamlessMenu from "./TeamlessMenu.svelte";
   import UserMenu from "./UserMenu.svelte";
 
+  const links = {
+    github: "https://github.com/Aidunlin/MeanTrack",
+    googleDoc:
+      "https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/edit#",
+    firebase: "https://firebase.google.com/",
+    svelte: "https://svelte.dev/",
+    newcss: "https://newcss.net/",
+  };
+
   const firebaseConfig: FirebaseOptions = {
     apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
     authDomain: "meantrack-97d77.firebaseapp.com",
@@ -140,15 +149,6 @@
       loaded = true;
     }
   });
-
-  const links = {
-    github: "https://github.com/Aidunlin/MeanTrack",
-    googleDoc:
-      "https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/edit#",
-    firebase: "https://firebase.google.com/",
-    svelte: "https://svelte.dev/",
-    newcss: "https://newcss.net/",
-  };
 </script>
 
 <header>
@@ -163,9 +163,8 @@
     <TeamlessMenu />
   {/if}
 {/if}
-<br />
-<hr />
 <footer>
+  <h2>About</h2>
   <p>
     View
     <a href={links.github} target="_blank">GitHub Repo</a>

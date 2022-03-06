@@ -19,6 +19,13 @@
     }).catch(console.error);
   }
 
+  function editHours() {
+    $mt.team.member.data.hours = parseInt(prompt("Enter your hours:"));
+    updateDoc($mt.team.member.document, {
+      hours: $mt.team.member.data.hours,
+    }).catch(console.error);
+  }
+
   function logout() {
     if (confirm("Are you sure?")) {
       signOut($mt.auth).catch(console.error);
@@ -46,6 +53,7 @@
     <button on:click={toggleTracking}>
       {$mt.team.member.data.tracking ? "Stop" : "Start"} tracking
     </button>
+    <button on:click={editHours}>Edit hours</button>
   </p>
 {/if}
 {#if $mt.user.data}

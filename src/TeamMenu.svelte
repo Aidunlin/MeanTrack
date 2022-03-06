@@ -58,29 +58,14 @@
     }
   }
 
-  function unverifyMembers() {
+  function removeMembers() {
     if (confirm("Are you sure?")) {
-      let selectedMembers = verifiedMembers
-        .filter((member) => selectedVerifiedIds.includes(member.id))
-        .map((verified): UnverifiedData => {
-          return {
-            id: verified.id,
-            name: verified.name,
-          };
-        });
-      unverifiedMembers.push(...selectedMembers);
-      unverifiedMembers = unverifiedMembers.sort((a, b) =>
-        a.name > b.name ? 1 : -1
-      );
       verifiedMembers = verifiedMembers.filter(
         (member) => !selectedVerifiedIds.includes(member.id)
       );
-      selectedVerifiedIds.forEach((id) => {
-        deleteDoc(doc($mt.team.member.collection, id)).catch(console.error);
-        let d = doc($mt.team.unverified.collection, id);
-        setDoc(
-          d,
-          selectedMembers.find((member) => member.id == id)
+      selectedVerifiedIds.forEach(async (id) => {
+        await deleteDoc(doc($mt.team.member.collection, id)).catch(
+          console.error
         );
       });
       selectedVerifiedIds = [];
@@ -107,13 +92,15 @@
       unverifiedMembers = unverifiedMembers.filter(
         (member) => !selectedUnverifiedIds.includes(member.id)
       );
-      selectedUnverifiedIds.forEach((id) => {
-        deleteDoc(doc($mt.team.unverified.collection, id)).catch(console.error);
+      selectedUnverifiedIds.forEach(async (id) => {
+        await deleteDoc(doc($mt.team.unverified.collection, id)).catch(
+          console.error
+        );
         let d = doc($mt.team.member.collection, id);
-        setDoc(
+        await setDoc(
           d,
           selectedMembers.find((member) => member.id == id)
-        );
+        ).catch(console.error);
       });
       selectedUnverifiedIds = [];
     }
@@ -156,16 +143,20 @@
 {/if}
 {#if $mt.user.data.id == $mt.team.data.ownerId}
   <p>
-    <button on:click={refreshMembers}>Refresh</button>
-    <button on:click={editGoal}>Edit goal</button>
     <button on:click={copyTeamId}>Copy id</button>
+    <button on:click={editGoal}>Edit goal</button>
+    <button on:click={leaveTeam}>Leave team</button>
   </p>
-  <h3>Members</h3>
   <p>
-    <button on:click={unverifyMembers} disabled={!selectedVerifiedIds.length}>
-      Unverify
+    <button on:click={refreshMembers}>Refresh</button>
+    <button class="green" on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>
+      Verify
+    </button>
+    <button class="red" on:click={removeMembers} disabled={!selectedVerifiedIds.length}>
+      Remove
     </button>
   </p>
+  <h3>Members</h3>
   <table>
     <thead>
       <tr>
@@ -193,11 +184,6 @@
     </tbody>
   </table>
   <h3>Unverified</h3>
-  <p>
-    <button on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>
-      Verify
-    </button>
-  </p>
   <table>
     <thead>
       <tr>
@@ -222,5 +208,6 @@
       {/each}
     </tbody>
   </table>
+{:else}
+  <p><button on:click={leaveTeam}>Leave team</button></p>
 {/if}
-<p><button on:click={leaveTeam}>Leave team</button></p>

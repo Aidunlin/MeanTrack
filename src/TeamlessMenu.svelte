@@ -27,23 +27,42 @@
         $mt.team.document,
         "unverified"
       ).withConverter(convertUnverifiedData);
-      $mt.team.unverified.document = doc(
-        $mt.team.unverified.collection,
-        $mt.user.data.id
-      );
-      $mt.team.unverified.data = {
-        id: $mt.user.data.id,
-        name: $mt.auth.currentUser.displayName,
-      };
-      await setDoc(
-        $mt.team.unverified.document,
-        $mt.team.unverified.data
-      ).catch(console.error);
-
+      
       $mt.user.data.teamId = $mt.team.data.id;
       await updateDoc($mt.user.document, {
         teamId: $mt.user.data.teamId,
       }).catch(console.error);
+
+      if ($mt.user.data.id == $mt.team.data.ownerId) {
+        $mt.team.private.document = doc(
+          $mt.team.document,
+          "private/data"
+        ).withConverter(convertTeamPrivateData);
+        $mt.team.private.data = (await getDoc($mt.team.private.document)).data();
+
+        $mt.team.member.collection = collection(
+          $mt.team.document,
+          "members"
+        ).withConverter(convertMemberData);
+        $mt.team.member.document = doc(
+          $mt.team.member.collection,
+          $mt.user.data.id
+        );
+        $mt.team.member.data = (await getDoc($mt.team.member.document)).data();
+      } else {
+        $mt.team.unverified.document = doc(
+          $mt.team.unverified.collection,
+          $mt.user.data.id
+        );
+        $mt.team.unverified.data = {
+          id: $mt.user.data.id,
+          name: $mt.auth.currentUser.displayName,
+        };
+        await setDoc(
+          $mt.team.unverified.document,
+          $mt.team.unverified.data
+        ).catch(console.error);
+      }
     } else {
       console.error("Team data not found!");
       $mt.team.document = null;
@@ -106,22 +125,27 @@
 </script>
 
 <h2>Join a team</h2>
-<label>
-  Team id
-  <br />
-  <input bind:value={joinTeamId} />
-</label>
+<p>
+  <label>
+    Team id
+    <br />
+    <input bind:value={joinTeamId} />
+  </label>
+</p>
 <p><button on:click={joinTeam}>Join</button></p>
 <h2>Create a team</h2>
-<label>
-  Team name
-  <br />
-  <input bind:value={createTeamName} />
-</label>
-<br />
-<label>
-  Team number
-  <br />
-  <input bind:value={createTeamNumber} type="number" />
-</label>
+<p>
+  <label>
+    Team name
+    <br />
+    <input bind:value={createTeamName} />
+  </label>
+</p>
+<p>
+  <label>
+    Team number
+    <br />
+    <input bind:value={createTeamNumber} type="number" />
+  </label>
+</p>
 <p><button on:click={createTeam}>Create</button></p>
