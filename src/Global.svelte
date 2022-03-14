@@ -1,11 +1,6 @@
 <script lang="ts" context="module">
   import type { Auth } from "firebase/auth";
-  import type {
-    CollectionReference,
-    DocumentReference,
-    FirestoreDataConverter,
-    Timestamp,
-  } from "firebase/firestore";
+  import type { CollectionReference, DocumentReference, FirestoreDataConverter, Timestamp } from "firebase/firestore";
   import { writable } from "svelte/store";
 
   export interface UserData {
@@ -127,20 +122,19 @@
     },
   };
 
-  export const convertTeamPrivateData: FirestoreDataConverter<TeamPrivateData> =
-    {
-      toFirestore: (team: TeamPrivateData) => {
-        return {
-          goal: team.goal,
-        };
-      },
-      fromFirestore: (snapshot, options) => {
-        const team = snapshot.data(options);
-        return {
-          goal: team.goal,
-        };
-      },
-    };
+  export const convertTeamPrivateData: FirestoreDataConverter<TeamPrivateData> = {
+    toFirestore: (team: TeamPrivateData) => {
+      return {
+        goal: team.goal,
+      };
+    },
+    fromFirestore: (snapshot, options) => {
+      const team = snapshot.data(options);
+      return {
+        goal: team.goal,
+      };
+    },
+  };
 
   export const convertMemberData: FirestoreDataConverter<MemberData> = {
     toFirestore: (member: MemberData) => {

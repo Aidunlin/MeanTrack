@@ -1,14 +1,7 @@
 <script lang="ts">
   import { FirebaseApp, FirebaseOptions, initializeApp } from "firebase/app";
   import { getAuth, onAuthStateChanged, User } from "firebase/auth";
-  import {
-    collection,
-    doc,
-    Firestore,
-    getDoc,
-    getFirestore,
-    setDoc,
-  } from "firebase/firestore";
+  import { collection, doc, Firestore, getDoc, getFirestore, setDoc } from "firebase/firestore";
   import {
     convertMemberData,
     convertTeamData,
@@ -23,8 +16,7 @@
 
   const links = {
     github: "https://github.com/Aidunlin/MeanTrack",
-    googleDoc:
-      "https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/edit#",
+    googleDoc: "https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/edit#",
     firebase: "https://firebase.google.com/",
     svelte: "https://svelte.dev/",
     newcss: "https://newcss.net/",
@@ -48,36 +40,18 @@
     $mt.team.document = doc($mt.team.collection, id);
     $mt.team.data = (await getDoc($mt.team.document)).data();
 
-    $mt.team.unverified.collection = collection(
-      $mt.team.document,
-      "unverified"
-    ).withConverter(convertUnverifiedData);
-    $mt.team.unverified.document = doc(
-      $mt.team.unverified.collection,
-      "unverified"
-    ).withConverter(convertUnverifiedData);
-    $mt.team.unverified.data = (
-      await getDoc($mt.team.unverified.document)
-    ).data();
+    $mt.team.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
+    $mt.team.unverified.document = doc($mt.team.unverified.collection, "unverified").withConverter(
+      convertUnverifiedData
+    );
+    $mt.team.unverified.data = (await getDoc($mt.team.unverified.document)).data();
 
-    if (
-      !$mt.team.unverified.data ||
-      $mt.user.data.id == $mt.team.data.ownerId
-    ) {
-      $mt.team.private.document = doc(
-        $mt.team.document,
-        "private/data"
-      ).withConverter(convertTeamPrivateData);
+    if (!$mt.team.unverified.data || $mt.user.data.id == $mt.team.data.ownerId) {
+      $mt.team.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
       $mt.team.private.data = (await getDoc($mt.team.private.document)).data();
 
-      $mt.team.member.collection = collection(
-        $mt.team.document,
-        "members"
-      ).withConverter(convertMemberData);
-      $mt.team.member.document = doc(
-        $mt.team.member.collection,
-        $mt.user.data.id
-      );
+      $mt.team.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
+      $mt.team.member.document = doc($mt.team.member.collection, $mt.user.data.id);
       $mt.team.member.data = (await getDoc($mt.team.member.document)).data();
     }
 
@@ -108,15 +82,9 @@
   firestore = getFirestore(firebaseApp);
   onAuthStateChanged($mt.auth, (user) => {
     if (user) {
-      $mt.user.collection = collection(firestore, "users").withConverter(
-        convertUserData
-      );
-      $mt.team.collection = collection(firestore, "teams").withConverter(
-        convertTeamData
-      );
-      $mt.user.document = doc($mt.user.collection, user.uid).withConverter(
-        convertUserData
-      );
+      $mt.user.collection = collection(firestore, "users").withConverter(convertUserData);
+      $mt.team.collection = collection(firestore, "teams").withConverter(convertTeamData);
+      $mt.user.document = doc($mt.user.collection, user.uid).withConverter(convertUserData);
       loadUser(user);
     } else {
       $mt = {
