@@ -43,10 +43,9 @@
     {$mt.team.member.data.lastAction.toDate().toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
   </p>
   <p>
-    <button on:click={toggleTracking}>
-      {$mt.team.member.data.tracking ? "Stop" : "Start"} tracking
-    </button>
+    <button on:click={toggleTracking}>{$mt.team.member.data.tracking ? "Stop" : "Start"} tracking</button>
     <button on:click={editHours}>Edit hours</button>
+    |
     <button on:click={logout}>Sign out</button>
   </p>
 {:else if $mt.user.data}

@@ -34,7 +34,7 @@
         await setDoc($mt.team.unverified.document, $mt.team.unverified.data).catch(console.error);
       }
     } else {
-      console.error("Team data not found!");
+      alert("Team not found!");
       $mt.team.document = null;
       $mt.team.data = null;
     }
@@ -86,7 +86,7 @@
     <input bind:value={joinTeamId} />
   </label>
 </p>
-<p><button on:click={joinTeam}>Join</button></p>
+<p><button disabled={!joinTeamId} on:click={joinTeam}>Join</button></p>
 <h2>Create a team</h2>
 <p>
   <label>
@@ -102,4 +102,4 @@
     <input bind:value={createTeamNumber} type="number" />
   </label>
 </p>
-<p><button disabled={!createTeamName && !createTeamNumber} on:click={createTeam}>Create</button></p>
+<p><button disabled={!createTeamName || !createTeamNumber} on:click={createTeam}>Create</button></p>

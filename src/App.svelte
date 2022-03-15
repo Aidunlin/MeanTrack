@@ -87,31 +87,28 @@
       $mt.user.document = doc($mt.user.collection, user.uid).withConverter(convertUserData);
       loadUser(user);
     } else {
-      $mt = {
-        auth: null,
-        user: {
+      $mt.user = {
+        data: null,
+        document: null,
+        collection: null,
+      };
+      $mt.team = {
+        data: null,
+        document: null,
+        collection: null,
+        private: {
+          data: null,
+          document: null,
+        },
+        member: {
           data: null,
           document: null,
           collection: null,
         },
-        team: {
+        unverified: {
           data: null,
           document: null,
           collection: null,
-          private: {
-            data: null,
-            document: null,
-          },
-          member: {
-            data: null,
-            document: null,
-            collection: null,
-          },
-          unverified: {
-            data: null,
-            document: null,
-            collection: null,
-          },
         },
       };
       loaded = true;
@@ -136,15 +133,15 @@
   <p>
     View
     <a href={links.github} target="_blank">GitHub Repo</a>
-    /
+    |
     <a href={links.googleDoc} target="_blank">Google Doc</a>
   </p>
   <p>
     Powered by
     <a href={links.firebase} target="_blank">Firebase</a>
-    /
+    |
     <a href={links.svelte} target="_blank">Svelte</a>
-    /
+    |
     <a href={links.newcss} target="_blank">new.css</a>
   </p>
 </footer>

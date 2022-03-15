@@ -1,0 +1,15 @@
+* {
+  color-scheme: dark light !important;
+}
+button.red {
+  background: hsl(0, 100%, 60%);
+}
+button.red:hover {
+  background: hsl(0, 100%, 40%);
+}
+button.green {
+  background: hsl(128, 100%, 60%);
+}
+button.green:hover {
+  background: hsl(128, 100%, 40%);
+}

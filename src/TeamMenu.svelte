@@ -109,36 +109,42 @@
     }).catch(console.error);
   }
 
+  function isOwner() {
+    return $mt.user.data.id == $mt.team.data.ownerId;
+  }
+
   $: refreshMembers();
 </script>
 
 <h2>Team {$mt.team.data.number}</h2>
 <p>{$mt.team.data.name}</p>
+
 {#if $mt.team.private.data}
   <p>Goal: {$mt.team.private.data.goal} hours</p>
-{:else}
-  <p>UNVERIFIED</p>
-{/if}
-{#if $mt.user.data.id == $mt.team.data.ownerId}
   <p>
     <button on:click={refreshMembers}>Refresh</button>
     <button on:click={copyTeamId}>Copy id</button>
-    <button on:click={editGoal}>Edit goal</button>
+    {#if isOwner()}
+      <button on:click={editGoal}>Edit goal</button>
+    {/if}
+    |
     <button on:click={leaveTeam}>Leave team</button>
   </p>
+  
   <h3>Members</h3>
-  <p>
-    <button
-      on:click={() => {
-        selectedVerifiedIds = verifiedMembers.map((member) => member.id);
-      }}
-      disabled={selectedVerifiedIds.length == verifiedMembers.length}
-    >
-      All
-    </button>
-    <button on:click={() => (selectedVerifiedIds = [])} disabled={selectedVerifiedIds.length == 0}> None </button>
-    <button class="red" on:click={removeMembers} disabled={!selectedVerifiedIds.length}> Remove </button>
-  </p>
+  {#if isOwner()}
+    <p>
+      <button
+        on:click={() => (selectedVerifiedIds = verifiedMembers.map((member) => member.id))}
+        disabled={selectedVerifiedIds.length == verifiedMembers.length}
+      >
+        All
+      </button>
+      <button on:click={() => (selectedVerifiedIds = [])} disabled={selectedVerifiedIds.length == 0}>None</button>
+      |
+      <button class="red" on:click={removeMembers} disabled={!selectedVerifiedIds.length}>Remove</button>
+    </p>
+  {/if}
   <table>
     <thead>
       <tr>
@@ -153,6 +159,9 @@
             <label>
               <input type="checkbox" bind:group={selectedVerifiedIds} name="verified-members" value={member.id} />
               {member.name}
+              {#if member.name == $mt.team.member.data.name}
+                (you)
+              {/if}
             </label>
           </td>
           <td>{member.hours.toFixed(1)}</td>
@@ -160,38 +169,42 @@
       {/each}
     </tbody>
   </table>
-  <h3>Unverified</h3>
-  <p>
-    <button
-      on:click={() => {
-        selectedUnverifiedIds = unverifiedMembers.map((member) => member.id);
-      }}
-      disabled={selectedUnverifiedIds.length == unverifiedMembers.length}
-    >
-      All
-    </button>
-    <button on:click={() => (selectedUnverifiedIds = [])} disabled={selectedUnverifiedIds.length == 0}> None </button>
-    <button class="green" on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}> Verify </button>
-  </p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each unverifiedMembers as member (member.id)}
+    
+  {#if isOwner()}
+    <h3>Unverified</h3>
+    <p>
+      <button
+        on:click={() => (selectedUnverifiedIds = unverifiedMembers.map((member) => member.id))}
+        disabled={selectedUnverifiedIds.length == unverifiedMembers.length}
+      >
+        All
+      </button>
+      <button on:click={() => (selectedUnverifiedIds = [])} disabled={selectedUnverifiedIds.length == 0}>None</button>
+      |
+      <button class="green" on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>Verify</button>
+    </p>
+    <table>
+      <thead>
         <tr>
-          <td>
-            <label>
-              <input type="checkbox" bind:group={selectedUnverifiedIds} name="unverified-members" value={member.id} />
-              {member.name}
-            </label>
-          </td>
+          <th>Name</th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each unverifiedMembers as member (member.id)}
+          <tr>
+            <td>
+              <label>
+                <input type="checkbox" bind:group={selectedUnverifiedIds} name="unverified-members" value={member.id} />
+                {member.name}
+              </label>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  {/if}
+  
 {:else}
-  <p><button on:click={leaveTeam}>Leave team</button></p>
+  <p>UNVERIFIED</p>
+  <button on:click={leaveTeam}>Leave team</button>
 {/if}
