@@ -80,6 +80,7 @@
   firebaseApp = initializeApp(firebaseConfig);
   $mt.auth = getAuth(firebaseApp);
   firestore = getFirestore(firebaseApp);
+  
   onAuthStateChanged($mt.auth, (user) => {
     if (user) {
       $mt.user.collection = collection(firestore, "users").withConverter(convertUserData);
@@ -120,6 +121,7 @@
   <h1>MeanTrack</h1>
   <p>A work-in-progress FRC hour tracking web app</p>
 </header>
+
 {#if loaded}
   <UserMenu />
   {#if $mt.team.data}
@@ -128,6 +130,7 @@
     <TeamlessMenu />
   {/if}
 {/if}
+
 <footer>
   <h2>About</h2>
   <p>

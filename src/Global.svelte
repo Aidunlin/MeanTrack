@@ -19,10 +19,14 @@
     goal: number;
   }
 
+  export interface Log {
+    hours: number;
+    start: Timestamp;
+  }
+
   export interface MemberData {
     id: string;
-    hours: number;
-    lastAction: Timestamp;
+    logs: Log[];
     name: string;
     tracking: boolean;
   }
@@ -88,6 +92,20 @@
     },
   });
 
+  export interface MemberManagement {
+    verifiedMembers: MemberData[];
+    selectedVerifiedIds: string[];
+    unverifiedMembers: UnverifiedData[];
+    selectedUnverifiedIds: string[];
+  }
+
+  export const memberManagement = writable<MemberManagement>({
+    verifiedMembers: [],
+    selectedVerifiedIds: [],
+    unverifiedMembers: [],
+    selectedUnverifiedIds: [],
+  });
+
   export const convertUserData: FirestoreDataConverter<UserData> = {
     toFirestore: (user: UserData) => {
       return {
@@ -139,8 +157,7 @@
   export const convertMemberData: FirestoreDataConverter<MemberData> = {
     toFirestore: (member: MemberData) => {
       return {
-        hours: member.hours,
-        lastAction: member.lastAction,
+        logs: member.logs,
         name: member.name,
         tracking: member.tracking,
       };
@@ -149,8 +166,7 @@
       const member = snapshot.data(options);
       return {
         id: snapshot.id,
-        hours: member.hours,
-        lastAction: member.lastAction,
+        logs: member.logs,
         name: member.name,
         tracking: member.tracking,
       };
@@ -171,4 +187,14 @@
       };
     },
   };
+
+  export const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
 </script>

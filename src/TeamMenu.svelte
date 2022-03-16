@@ -1,40 +1,39 @@
 <script lang="ts">
-  import { deleteDoc, doc, getDocs, orderBy, query, setDoc, Timestamp, updateDoc } from "firebase/firestore";
-  import { MemberData, mt, UnverifiedData } from "./Global.svelte";
-
-  let verifiedMembers: MemberData[] = [];
-  let selectedVerifiedIds: string[] = [];
-
-  let unverifiedMembers: UnverifiedData[] = [];
-  let selectedUnverifiedIds: string[] = [];
+  import { getDocs, orderBy, query, updateDoc } from "firebase/firestore";
+  import { memberManagement, mt } from "./Global.svelte";
+  import MembersView from "./MembersView.svelte";
+  import UnverifiedsView from "./UnverifiedsView.svelte";
 
   function refreshMembers() {
     if (!$mt.team.member.collection) return;
 
     let membersQuery = query($mt.team.member.collection, orderBy("name"));
     getDocs(membersQuery).then((querySnapshot) => {
-      verifiedMembers = [];
-      selectedVerifiedIds = [];
+      $memberManagement.verifiedMembers = [];
+      $memberManagement.selectedVerifiedIds = [];
       querySnapshot.forEach((memberDoc) => {
-        verifiedMembers = [...verifiedMembers, memberDoc.data()];
+        $memberManagement.verifiedMembers = [...$memberManagement.verifiedMembers, memberDoc.data()];
       });
     });
 
     let unverifiedQuery = query($mt.team.unverified.collection, orderBy("name"));
     getDocs(unverifiedQuery).then((querySnapshot) => {
-      unverifiedMembers = [];
-      selectedUnverifiedIds = [];
+      $memberManagement.unverifiedMembers = [];
+      $memberManagement.selectedUnverifiedIds = [];
       querySnapshot.forEach((unverifiedDoc) => {
-        unverifiedMembers = [...unverifiedMembers, unverifiedDoc.data()];
+        $memberManagement.unverifiedMembers = [...$memberManagement.unverifiedMembers, unverifiedDoc.data()];
       });
     });
   }
 
   function editGoal() {
-    $mt.team.private.data.goal = parseInt(prompt("Enter a goal:"));
-    updateDoc($mt.team.private.document, {
-      goal: $mt.team.private.data.goal,
-    }).catch(console.error);
+    let goalInput = parseInt(prompt("Enter a goal:"));
+    if (goalInput) {
+      $mt.team.private.data.goal = isNaN(goalInput) ? $mt.team.private.data.goal : goalInput;
+      updateDoc($mt.team.private.document, {
+        goal: $mt.team.private.data.goal,
+      }).catch(console.error);
+    }
   }
 
   function copyTeamId() {
@@ -44,44 +43,6 @@
     } else {
       prompt("Copy the id:", $mt.team.data.id);
     }
-  }
-
-  function removeMembers() {
-    if (!confirm("Are you sure?")) return;
-
-    verifiedMembers = verifiedMembers.filter((member) => !selectedVerifiedIds.includes(member.id));
-    selectedVerifiedIds.forEach(async (id) => {
-      await deleteDoc(doc($mt.team.member.collection, id)).catch(console.error);
-    });
-    selectedVerifiedIds = [];
-  }
-
-  function verifyMembers() {
-    if (!confirm("Are you sure?")) return;
-
-    let selectedMembers = unverifiedMembers
-      .filter((member) => selectedUnverifiedIds.includes(member.id))
-      .map((unverified): MemberData => {
-        return {
-          id: unverified.id,
-          hours: 0,
-          lastAction: Timestamp.now(),
-          name: unverified.name,
-          tracking: false,
-        };
-      });
-    verifiedMembers.push(...selectedMembers);
-    verifiedMembers = verifiedMembers.sort((a, b) => (a.name > b.name ? 1 : -1));
-    unverifiedMembers = unverifiedMembers.filter((member) => !selectedUnverifiedIds.includes(member.id));
-    selectedUnverifiedIds.forEach(async (id) => {
-      await deleteDoc(doc($mt.team.unverified.collection, id)).catch(console.error);
-      let d = doc($mt.team.member.collection, id);
-      await setDoc(
-        d,
-        selectedMembers.find((member) => member.id == id)
-      ).catch(console.error);
-    });
-    selectedUnverifiedIds = [];
   }
 
   function leaveTeam() {
@@ -109,101 +70,31 @@
     }).catch(console.error);
   }
 
-  function isOwner() {
-    return $mt.user.data.id == $mt.team.data.ownerId;
+  $: {
+    refreshMembers();
   }
-
-  $: refreshMembers();
 </script>
 
 <h2>Team {$mt.team.data.number}</h2>
 <p>{$mt.team.data.name}</p>
 
-{#if $mt.team.private.data}
+{#if $mt.team.private.data && $mt.team.member.data}
   <p>Goal: {$mt.team.private.data.goal} hours</p>
   <p>
     <button on:click={refreshMembers}>Refresh</button>
+    |
     <button on:click={copyTeamId}>Copy id</button>
-    {#if isOwner()}
+    {#if $mt.user.data.id == $mt.team.data.ownerId}
       <button on:click={editGoal}>Edit goal</button>
     {/if}
     |
     <button on:click={leaveTeam}>Leave team</button>
   </p>
-  
-  <h3>Members</h3>
-  {#if isOwner()}
-    <p>
-      <button
-        on:click={() => (selectedVerifiedIds = verifiedMembers.map((member) => member.id))}
-        disabled={selectedVerifiedIds.length == verifiedMembers.length}
-      >
-        All
-      </button>
-      <button on:click={() => (selectedVerifiedIds = [])} disabled={selectedVerifiedIds.length == 0}>None</button>
-      |
-      <button class="red" on:click={removeMembers} disabled={!selectedVerifiedIds.length}>Remove</button>
-    </p>
+
+  <MembersView />
+  {#if $mt.user.data.id == $mt.team.data.ownerId && $memberManagement.unverifiedMembers.length}
+    <UnverifiedsView />
   {/if}
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Hours</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each verifiedMembers as member (member.id)}
-        <tr>
-          <td>
-            <label>
-              <input type="checkbox" bind:group={selectedVerifiedIds} name="verified-members" value={member.id} />
-              {member.name}
-              {#if member.name == $mt.team.member.data.name}
-                (you)
-              {/if}
-            </label>
-          </td>
-          <td>{member.hours.toFixed(1)}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-    
-  {#if isOwner()}
-    <h3>Unverified</h3>
-    <p>
-      <button
-        on:click={() => (selectedUnverifiedIds = unverifiedMembers.map((member) => member.id))}
-        disabled={selectedUnverifiedIds.length == unverifiedMembers.length}
-      >
-        All
-      </button>
-      <button on:click={() => (selectedUnverifiedIds = [])} disabled={selectedUnverifiedIds.length == 0}>None</button>
-      |
-      <button class="green" on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>Verify</button>
-    </p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each unverifiedMembers as member (member.id)}
-          <tr>
-            <td>
-              <label>
-                <input type="checkbox" bind:group={selectedUnverifiedIds} name="unverified-members" value={member.id} />
-                {member.name}
-              </label>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  {/if}
-  
 {:else}
   <p>UNVERIFIED</p>
   <button on:click={leaveTeam}>Leave team</button>

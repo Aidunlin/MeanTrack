@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { collection, doc, getDoc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
+  import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
   import { convertMemberData, convertTeamPrivateData, convertUnverifiedData, mt } from "./Global.svelte";
 
   let joinTeamId: string;
@@ -62,8 +62,7 @@
     $mt.team.member.document = doc($mt.team.member.collection, $mt.user.data.id);
     $mt.team.member.data = {
       id: $mt.user.data.id,
-      hours: 0,
-      lastAction: Timestamp.now(),
+      logs: [],
       name: $mt.auth.currentUser.displayName,
       tracking: false,
     };
