@@ -3,28 +3,22 @@
   import { Timestamp, updateDoc } from "firebase/firestore";
   import { Log, mt } from "./Global.svelte";
 
-  function startTracking() {
-    let newLog: Log = {
-      hours: 0,
-      start: Timestamp.now(),
-    };
-    $mt.team.member.data.logs = [...$mt.team.member.data.logs, newLog];
-  }
+  let hours: string;
+  let lastTimestamp: Timestamp;
+  let newHours: number;
 
   function getCurrentLog() {
     let currentLog: Log = {
       hours: 0,
       start: new Timestamp(0, 0),
     }
-
-    if ($mt.team.member.data.logs.length) {
-      $mt.team.member.data.logs.forEach((log) => {
+    if ($mt.member.data.logs.length) {
+      $mt.member.data.logs.forEach((log) => {
         if (log.start.toMillis() > currentLog.start.toMillis()) {
           currentLog = log;
         }
       });
     }
-
     return currentLog;
   }
 
@@ -34,23 +28,30 @@
     currentLog.hours = difference / 1000 / 3600;
   }
 
+  function startTracking() {
+    let newLog: Log = {
+      hours: 0,
+      start: Timestamp.now(),
+    };
+    $mt.member.data.logs = [...$mt.member.data.logs, newLog];
+  }
+
   function toggleTracking() {
-    if ($mt.team.member.data.tracking) {
+    if ($mt.member.data.tracking) {
       stopTracking();
     } else {
       startTracking();
     }
-
-    $mt.team.member.data.tracking = !$mt.team.member.data.tracking;
-    updateDoc($mt.team.member.document, {
-      logs: $mt.team.member.data.logs,
-      tracking: $mt.team.member.data.tracking,
+    $mt.member.data.tracking = !$mt.member.data.tracking;
+    updateDoc($mt.member.document, {
+      logs: $mt.member.data.logs,
+      tracking: $mt.member.data.tracking,
     }).catch(console.error);
   }
 
   function getTotalHours(): number {
     let totalHours = 0;
-    $mt.team.member.data.logs.forEach(log => {
+    $mt.member.data.logs.forEach(log => {
       totalHours += log.hours;
     });
     return totalHours;
@@ -65,28 +66,34 @@
     signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
   }
 
-  let hours: string;
-  let lastTimestamp: string;
-
   $: {
-    if ($mt.team.member.data) {
+    if ($mt.member.data) {
       hours = getTotalHours().toFixed(1);
-      lastTimestamp = getCurrentLog().start.toDate().toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })
+      lastTimestamp = getCurrentLog().start;
+      newHours = (Timestamp.now().toMillis() - lastTimestamp.toMillis()) / 1000 / 3600;
     }
   }
 </script>
 
-{#if $mt.team.member.data}
-  <h2>{$mt.team.member.data.name}</h2>
-  {#if $mt.team.member.data.logs}
-    <p>Hours: {hours}</p>
+{#if $mt.member.data}
+  <h2>{$mt.member.data.name}</h2>
+  {#if $mt.member.data.logs}
     <p>
-      {$mt.team.member.data.tracking ? "Started:" : "Stopped:"}
-      {lastTimestamp}
+      Hours:
+      {hours}
+      {#if $mt.member.data.tracking}
+        (+ {newHours.toFixed(1)})
+      {/if}
     </p>
+    {#if $mt.member.data.tracking}
+      <p>
+        Started:
+        {lastTimestamp.toDate().toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
+      </p>
+    {/if}
   {/if}
   <p>
-    <button on:click={toggleTracking}>{$mt.team.member.data.tracking ? "Stop" : "Start"} tracking</button>
+    <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
     |
     <button on:click={logout}>Sign out</button>
   </p>

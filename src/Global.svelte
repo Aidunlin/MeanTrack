@@ -1,7 +1,7 @@
 <script lang="ts" context="module">
+  import { writable } from "svelte/store";
   import type { Auth } from "firebase/auth";
   import type { CollectionReference, DocumentReference, FirestoreDataConverter, Timestamp } from "firebase/firestore";
-  import { writable } from "svelte/store";
 
   export interface UserData {
     id: string;
@@ -47,20 +47,20 @@
       data: TeamData;
       document: DocumentReference<TeamData>;
       collection: CollectionReference<TeamData>;
-      private: {
-        data: TeamPrivateData;
-        document: DocumentReference<TeamPrivateData>;
-      };
-      member: {
-        data: MemberData;
-        document: DocumentReference<MemberData>;
-        collection: CollectionReference<MemberData>;
-      };
-      unverified: {
-        data: UnverifiedData;
-        document: DocumentReference<UnverifiedData>;
-        collection: CollectionReference<UnverifiedData>;
-      };
+    };
+    private: {
+      data: TeamPrivateData;
+      document: DocumentReference<TeamPrivateData>;
+    };
+    member: {
+      data: MemberData;
+      document: DocumentReference<MemberData>;
+      collection: CollectionReference<MemberData>;
+    };
+    unverified: {
+      data: UnverifiedData;
+      document: DocumentReference<UnverifiedData>;
+      collection: CollectionReference<UnverifiedData>;
     };
   }
 
@@ -75,20 +75,20 @@
       data: null,
       document: null,
       collection: null,
-      private: {
-        data: null,
-        document: null,
-      },
-      member: {
-        data: null,
-        document: null,
-        collection: null,
-      },
-      unverified: {
-        data: null,
-        document: null,
-        collection: null,
-      },
+    },
+    private: {
+      data: null,
+      document: null,
+    },
+    member: {
+      data: null,
+      document: null,
+      collection: null,
+    },
+    unverified: {
+      data: null,
+      document: null,
+      collection: null,
     },
   });
 
@@ -187,14 +187,4 @@
       };
     },
   };
-
-  export const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
 </script>

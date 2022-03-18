@@ -33,60 +33,51 @@
 
   let firebaseApp: FirebaseApp;
   let firestore: Firestore;
-
   let loaded = false;
+
+  async function loadMember() {
+    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
+    $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
+    $mt.member.data = (await getDoc($mt.member.document)).data();
+  }
+
+  async function loadUnverified() {
+    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
+    $mt.unverified.document = doc($mt.unverified.collection, "unverified").withConverter(
+      convertUnverifiedData
+    );
+    $mt.unverified.data = (await getDoc($mt.unverified.document)).data();
+  }
 
   async function loadTeam(id: string) {
     $mt.team.document = doc($mt.team.collection, id);
     $mt.team.data = (await getDoc($mt.team.document)).data();
-
-    $mt.team.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
-    $mt.team.unverified.document = doc($mt.team.unverified.collection, "unverified").withConverter(
-      convertUnverifiedData
-    );
-    $mt.team.unverified.data = (await getDoc($mt.team.unverified.document)).data();
-
-    if (!$mt.team.unverified.data || $mt.user.data.id == $mt.team.data.ownerId) {
-      $mt.team.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
-      $mt.team.private.data = (await getDoc($mt.team.private.document)).data();
-
-      $mt.team.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
-      $mt.team.member.document = doc($mt.team.member.collection, $mt.user.data.id);
-      $mt.team.member.data = (await getDoc($mt.team.member.document)).data();
-    }
-
-    loaded = true;
-  }
-
-  async function loadUser(userAccount: User) {
-    let snapshot = await getDoc($mt.user.document);
-    if (snapshot.exists()) {
-      $mt.user.data = snapshot.data();
-      if ($mt.user.data.teamId) {
-        await loadTeam($mt.user.data.teamId);
-      } else {
-        loaded = true;
-      }
-    } else {
-      $mt.user.data = {
-        id: userAccount.uid,
-        teamId: "",
-      };
-      loaded = true;
-      await setDoc($mt.user.document, $mt.user.data).catch(console.error);
+    await loadUnverified();
+    if (!$mt.unverified.data || $mt.user.data.id == $mt.team.data.ownerId) {
+      $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
+      $mt.private.data = (await getDoc($mt.private.document)).data();
+      await loadMember();
     }
   }
 
-  firebaseApp = initializeApp(firebaseConfig);
-  $mt.auth = getAuth(firebaseApp);
-  firestore = getFirestore(firebaseApp);
-  
-  onAuthStateChanged($mt.auth, (user) => {
+  async function loadUser(user: User) {
     if (user) {
       $mt.user.collection = collection(firestore, "users").withConverter(convertUserData);
       $mt.team.collection = collection(firestore, "teams").withConverter(convertTeamData);
       $mt.user.document = doc($mt.user.collection, user.uid).withConverter(convertUserData);
-      loadUser(user);
+      let snapshot = await getDoc($mt.user.document);
+      if (snapshot.exists()) {
+        $mt.user.data = snapshot.data();
+        if ($mt.user.data.teamId) {
+          await loadTeam($mt.user.data.teamId);
+        }
+      } else {
+        $mt.user.data = {
+          id: user.uid,
+          teamId: "",
+        };
+        await setDoc($mt.user.document, $mt.user.data).catch(console.error);
+      }
     } else {
       $mt.user = {
         data: null,
@@ -97,30 +88,37 @@
         data: null,
         document: null,
         collection: null,
-        private: {
-          data: null,
-          document: null,
-        },
-        member: {
-          data: null,
-          document: null,
-          collection: null,
-        },
-        unverified: {
-          data: null,
-          document: null,
-          collection: null,
-        },
       };
-      loaded = true;
+      $mt.private = {
+        data: null,
+        document: null,
+      };
+      $mt.member = {
+        data: null,
+        document: null,
+        collection: null,
+      };
+      $mt.unverified = {
+        data: null,
+        document: null,
+        collection: null,
+      };
     }
-  });
+    loaded = true;
+  }
+
+  function load() {
+    firebaseApp = initializeApp(firebaseConfig);
+    $mt.auth = getAuth(firebaseApp);
+    firestore = getFirestore(firebaseApp);
+    onAuthStateChanged($mt.auth, loadUser);
+  }
 </script>
 
-<header>
-  <h1>MeanTrack</h1>
-  <p>A work-in-progress FRC hour tracking web app</p>
-</header>
+<svelte:window on:load={load} />
+
+<h1>MeanTrack</h1>
+<p>A work-in-progress FRC hour tracking web app</p>
 
 {#if loaded}
   <UserMenu />
@@ -131,20 +129,18 @@
   {/if}
 {/if}
 
-<footer>
-  <h2>About</h2>
-  <p>
-    View
-    <a href={links.github} target="_blank">GitHub Repo</a>
-    |
-    <a href={links.googleDoc} target="_blank">Google Doc</a>
-  </p>
-  <p>
-    Powered by
-    <a href={links.firebase} target="_blank">Firebase</a>
-    |
-    <a href={links.svelte} target="_blank">Svelte</a>
-    |
-    <a href={links.newcss} target="_blank">new.css</a>
-  </p>
-</footer>
+<h2>About</h2>
+<p>
+  View
+  <a href={links.github} target="_blank">GitHub Repo</a>
+  |
+  <a href={links.googleDoc} target="_blank">Google Doc</a>
+</p>
+<p>
+  Powered by
+  <a href={links.firebase} target="_blank">Firebase</a>
+  |
+  <a href={links.svelte} target="_blank">Svelte</a>
+  |
+  <a href={links.newcss} target="_blank">new.css</a>
+</p>

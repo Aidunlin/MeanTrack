@@ -9,29 +9,25 @@
   async function joinTeam() {
     $mt.team.document = doc($mt.team.collection, joinTeamId);
     $mt.team.data = (await getDoc($mt.team.document)).data();
-
     if ($mt.team.data) {
-      $mt.team.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
-
+      $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
       $mt.user.data.teamId = $mt.team.data.id;
       await updateDoc($mt.user.document, {
         teamId: $mt.user.data.teamId,
       }).catch(console.error);
-
       if ($mt.user.data.id == $mt.team.data.ownerId) {
-        $mt.team.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
-        $mt.team.private.data = (await getDoc($mt.team.private.document)).data();
-
-        $mt.team.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
-        $mt.team.member.document = doc($mt.team.member.collection, $mt.user.data.id);
-        $mt.team.member.data = (await getDoc($mt.team.member.document)).data();
+        $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
+        $mt.private.data = (await getDoc($mt.private.document)).data();
+        $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
+        $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
+        $mt.member.data = (await getDoc($mt.member.document)).data();
       } else {
-        $mt.team.unverified.document = doc($mt.team.unverified.collection, $mt.user.data.id);
-        $mt.team.unverified.data = {
+        $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
+        $mt.unverified.data = {
           id: $mt.user.data.id,
           name: $mt.auth.currentUser.displayName,
         };
-        await setDoc($mt.team.unverified.document, $mt.team.unverified.data).catch(console.error);
+        await setDoc($mt.unverified.document, $mt.unverified.data).catch(console.error);
       }
     } else {
       alert("Team not found!");
@@ -42,7 +38,6 @@
 
   async function createTeam() {
     if (!(createTeamName && createTeamNumber)) return;
-
     $mt.team.document = doc($mt.team.collection);
     $mt.team.data = {
       id: $mt.team.document.id,
@@ -51,25 +46,21 @@
       ownerId: $mt.user.data.id,
     };
     await setDoc($mt.team.document, $mt.team.data).catch(console.error);
-
-    $mt.team.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
-    $mt.team.private.data = {
+    $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
+    $mt.private.data = {
       goal: 0,
     };
-    await setDoc($mt.team.private.document, $mt.team.private.data).catch(console.error);
-
-    $mt.team.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
-    $mt.team.member.document = doc($mt.team.member.collection, $mt.user.data.id);
-    $mt.team.member.data = {
+    await setDoc($mt.private.document, $mt.private.data).catch(console.error);
+    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
+    $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
+    $mt.member.data = {
       id: $mt.user.data.id,
       logs: [],
       name: $mt.auth.currentUser.displayName,
       tracking: false,
     };
-    await setDoc($mt.team.member.document, $mt.team.member.data).catch(console.error);
-
-    $mt.team.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
-
+    await setDoc($mt.member.document, $mt.member.data).catch(console.error);
+    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
     $mt.user.data.teamId = $mt.team.document.id;
     await updateDoc($mt.user.document, {
       teamId: $mt.user.data.teamId,
