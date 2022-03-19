@@ -62,10 +62,6 @@
     signOut($mt.auth).catch(console.error);
   }
 
-  function login() {
-    signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
-  }
-
   $: {
     if ($mt.member.data) {
       hours = getTotalHours().toFixed(1);
@@ -75,30 +71,24 @@
   }
 </script>
 
-{#if $mt.member.data}
-  <h2>{$mt.member.data.name}</h2>
-  {#if $mt.member.data.logs}
-    <p>
-      Hours:
-      {hours}
-      {#if $mt.member.data.tracking}
-        (+ {newHours.toFixed(1)})
-      {/if}
-    </p>
-    {#if $mt.member.data.tracking}
-      <p>
-        Started:
-        {lastTimestamp.toDate().toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
-      </p>
-    {/if}
-  {/if}
+<h2>{$mt.member.data.name}</h2>
+{#if $mt.member.data.logs}
   <p>
-    <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
-    |
-    <button on:click={logout}>Sign out</button>
+    Hours:
+    {hours}
+    {#if $mt.member.data.tracking}
+      (+ {newHours.toFixed(1)})
+    {/if}
   </p>
-{:else if $mt.user.data}
-  <p><button on:click={logout}>Sign out</button></p>
-{:else}
-  <p><button on:click={login}>Sign in</button></p>
+  {#if $mt.member.data.tracking}
+    <p>
+      Started:
+      {lastTimestamp.toDate().toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
+    </p>
+  {/if}
 {/if}
+<p>
+  <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
+  |
+  <button on:click={logout}>Sign out</button>
+</p>

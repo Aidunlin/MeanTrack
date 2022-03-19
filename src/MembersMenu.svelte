@@ -11,24 +11,24 @@
 
   function updateSunday(i: number) {
     sunday.setDate(sunday.getDate() + i);
-    $memberManagement.verifiedMembers = $memberManagement.verifiedMembers;
+    $memberManagement.members = $memberManagement.members;
     sunday = sunday;
   }
 
   function removeMembers() {
     if (!confirm("Are you sure?")) return;
-    let membersToRemove = $memberManagement.verifiedMembers.filter((member) => {
+    let membersToRemove = $memberManagement.members.filter((member) => {
       let isOwner = member.id == $mt.team.data.ownerId;
-      let isSelected = $memberManagement.selectedVerifiedIds.includes(member.id);
+      let isSelected = $memberManagement.selectedMembers.includes(member.id);
       return !isOwner && isSelected;
     });
     membersToRemove.forEach(async (member) => {
       await deleteDoc(doc($mt.member.collection, member.id)).catch(console.error);
     });
-    $memberManagement.verifiedMembers = $memberManagement.verifiedMembers.filter((member) => {
-      return !$memberManagement.selectedVerifiedIds.includes(member.id);
+    $memberManagement.members = $memberManagement.members.filter((member) => {
+      return !$memberManagement.selectedMembers.includes(member.id);
     });
-    $memberManagement.selectedVerifiedIds = [];
+    $memberManagement.selectedMembers = [];
   }
 
   function getTotalHours(logs: Log[]): number {
@@ -56,10 +56,10 @@
     if (!$mt.member.collection) return;
     let membersQuery = query($mt.member.collection, orderBy("name"));
     getDocs(membersQuery).then((querySnapshot) => {
-      $memberManagement.verifiedMembers = [];
-      $memberManagement.selectedVerifiedIds = [];
+      $memberManagement.members = [];
+      $memberManagement.selectedMembers = [];
       querySnapshot.forEach((memberDoc) => {
-        $memberManagement.verifiedMembers = [...$memberManagement.verifiedMembers, memberDoc.data()];
+        $memberManagement.members = [...$memberManagement.members, memberDoc.data()];
       });
     });
   }
@@ -70,12 +70,14 @@
 <h3>Members</h3>
 <p>
   <button on:click={refreshMembers}>Refresh</button>
-  |
-  <button on:click={() => updateSunday(-7)}>&lt;&lt;</button>
-  <button on:click={() => updateSunday(7)}>&gt;&gt;</button>
-  |
+  {#if window.innerWidth > 600}
+    |
+    <button on:click={() => updateSunday(-7)}>&lt;&lt;</button>
+    <button on:click={() => updateSunday(7)}>&gt;&gt;</button>
+  {/if}
   {#if $mt.user.data.id == $mt.team.data.ownerId}
-    <button class="red" on:click={removeMembers} disabled={!$memberManagement.selectedVerifiedIds.length}>
+    |
+    <button class="red" on:click={removeMembers} disabled={!$memberManagement.selectedMembers.length}>
       Remove
     </button>
   {/if}
@@ -86,23 +88,23 @@
       <tr>
         <th>Name</th>
         <th>Hours</th>
-        {#each [...Array(7).keys()] as dayIndex}
-          {@const date = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + dayIndex)}
-          <th>
-            {date.toLocaleDateString(undefined, { dateStyle: "short" })}
-          </th>
-        {/each}
+        {#if window.innerWidth > 600}
+          {#each [...Array(7).keys()] as dayIndex}
+            {@const date = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + dayIndex)}
+            <th>{date.toLocaleDateString(undefined, { dateStyle: "short" })}</th>
+          {/each}
+        {/if}
       </tr>
     </thead>
     <tbody>
-      {#each $memberManagement.verifiedMembers as member (member.id)}
+      {#each $memberManagement.members as member (member.id)}
         <tr>
           <td>
             <label>
               <input
                 type="checkbox"
-                bind:group={$memberManagement.selectedVerifiedIds}
-                name="verified-members"
+                bind:group={$memberManagement.selectedMembers}
+                name="members"
                 value={member.id}
                 disabled={$mt.user.data.id != $mt.team.data.ownerId}
               />
@@ -113,10 +115,12 @@
             </label>
           </td>
           <td>{getTotalHours(member.logs).toFixed(1)}</td>
-          {#each [...Array(7).keys()] as dayIndex}
-            {@const hours = getOneDayHours(dayIndex, member.logs)}
-            <td>{hours ? hours.toFixed(1) : ""}</td>
-          {/each}
+          {#if window.innerWidth > 600}
+            {#each [...Array(7).keys()] as dayIndex}
+              {@const hours = getOneDayHours(dayIndex, member.logs)}
+              <td>{hours ? hours.toFixed(1) : ""}</td>
+            {/each}
+          {/if}
         </tr>
       {/each}
     </tbody>

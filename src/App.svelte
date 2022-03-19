@@ -1,18 +1,20 @@
 <script lang="ts">
   import { FirebaseApp, FirebaseOptions, initializeApp } from "firebase/app";
-  import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
   import { collection, doc, Firestore, getDoc, getFirestore, setDoc } from "firebase/firestore";
   import {
     convertMemberData,
     convertTeamData,
-    convertTeamPrivateData,
+    convertPrivateData,
     convertUnverifiedData,
     convertUserData,
     mt,
   } from "./Global.svelte";
+  import UserMenu from "./UserMenu.svelte";
   import TeamMenu from "./TeamMenu.svelte";
   import TeamlessMenu from "./TeamlessMenu.svelte";
-  import UserMenu from "./UserMenu.svelte";
+  import MembersMenu from "./MembersMenu.svelte";
+  import UnverifiedsMenu from "./UnverifiedsMenu.svelte";
 
   const links = {
     github: "https://github.com/Aidunlin/MeanTrack",
@@ -35,6 +37,15 @@
   let firestore: Firestore;
   let loaded = false;
 
+  function login() {
+    signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
+  }
+
+  function logout() {
+    if (!confirm("Are you sure?")) return;
+    signOut($mt.auth).catch(console.error);
+  }
+
   async function loadMember() {
     $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
     $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
@@ -43,9 +54,7 @@
 
   async function loadUnverified() {
     $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
-    $mt.unverified.document = doc($mt.unverified.collection, "unverified").withConverter(
-      convertUnverifiedData
-    );
+    $mt.unverified.document = doc($mt.unverified.collection, "unverified").withConverter(convertUnverifiedData);
     $mt.unverified.data = (await getDoc($mt.unverified.document)).data();
   }
 
@@ -54,7 +63,7 @@
     $mt.team.data = (await getDoc($mt.team.document)).data();
     await loadUnverified();
     if (!$mt.unverified.data || $mt.user.data.id == $mt.team.data.ownerId) {
-      $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
+      $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertPrivateData);
       $mt.private.data = (await getDoc($mt.private.document)).data();
       await loadMember();
     }
@@ -113,19 +122,30 @@
     firestore = getFirestore(firebaseApp);
     onAuthStateChanged($mt.auth, loadUser);
   }
-</script>
 
-<svelte:window on:load={load} />
+  load();
+</script>
 
 <h1>MeanTrack</h1>
 <p>A work-in-progress FRC hour tracking web app</p>
 
 {#if loaded}
-  <UserMenu />
+  {#if $mt.member.data}
+    <UserMenu />
+  {/if}
   {#if $mt.team.data}
     <TeamMenu />
+    {#if $mt.private.data}
+      <MembersMenu />
+    {/if}
+    {#if $mt.user.data.id == $mt.team.data.ownerId}
+      <UnverifiedsMenu />
+    {/if}
   {:else if $mt.user.data}
+    <p><button on:click={logout}>Sign out</button></p>
     <TeamlessMenu />
+  {:else}
+    <p><button on:click={login}>Sign in</button></p>
   {/if}
 {/if}
 

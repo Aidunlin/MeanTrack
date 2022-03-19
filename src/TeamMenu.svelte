@@ -1,8 +1,6 @@
 <script lang="ts">
   import { updateDoc } from "firebase/firestore";
   import { mt } from "./Global.svelte";
-  import MembersView from "./MembersView.svelte";
-  import UnverifiedsView from "./UnverifiedsView.svelte";
 
   function editGoal() {
     let goalInput = parseInt(prompt("Enter a goal:"));
@@ -60,10 +58,6 @@
     |
     <button on:click={leaveTeam}>Leave team</button>
   </p>
-  <MembersView />
-  {#if $mt.user.data.id == $mt.team.data.ownerId}
-    <UnverifiedsView />
-  {/if}
 {:else}
   <p>UNVERIFIED</p>
   <button on:click={leaveTeam}>Leave team</button>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-  import { convertMemberData, convertTeamPrivateData, convertUnverifiedData, mt } from "./Global.svelte";
+  import { convertMemberData, convertPrivateData, convertUnverifiedData, mt } from "./Global.svelte";
 
   let joinTeamId: string;
   let createTeamName: string;
@@ -16,7 +16,7 @@
         teamId: $mt.user.data.teamId,
       }).catch(console.error);
       if ($mt.user.data.id == $mt.team.data.ownerId) {
-        $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
+        $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertPrivateData);
         $mt.private.data = (await getDoc($mt.private.document)).data();
         $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
         $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
@@ -46,7 +46,7 @@
       ownerId: $mt.user.data.id,
     };
     await setDoc($mt.team.document, $mt.team.data).catch(console.error);
-    $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertTeamPrivateData);
+    $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertPrivateData);
     $mt.private.data = {
       goal: 0,
     };

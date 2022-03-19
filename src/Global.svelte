@@ -3,6 +3,11 @@
   import type { Auth } from "firebase/auth";
   import type { CollectionReference, DocumentReference, FirestoreDataConverter, Timestamp } from "firebase/firestore";
 
+  export interface Log {
+    hours: number;
+    start: Timestamp;
+  }
+
   export interface UserData {
     id: string;
     teamId: string;
@@ -15,13 +20,8 @@
     ownerId: string;
   }
 
-  export interface TeamPrivateData {
+  export interface PrivateData {
     goal: number;
-  }
-
-  export interface Log {
-    hours: number;
-    start: Timestamp;
   }
 
   export interface MemberData {
@@ -49,8 +49,8 @@
       collection: CollectionReference<TeamData>;
     };
     private: {
-      data: TeamPrivateData;
-      document: DocumentReference<TeamPrivateData>;
+      data: PrivateData;
+      document: DocumentReference<PrivateData>;
     };
     member: {
       data: MemberData;
@@ -93,17 +93,17 @@
   });
 
   export interface MemberManagement {
-    verifiedMembers: MemberData[];
-    selectedVerifiedIds: string[];
-    unverifiedMembers: UnverifiedData[];
-    selectedUnverifiedIds: string[];
+    members: MemberData[];
+    selectedMembers: string[];
+    unverifieds: UnverifiedData[];
+    selectedUnverifieds: string[];
   }
 
   export const memberManagement = writable<MemberManagement>({
-    verifiedMembers: [],
-    selectedVerifiedIds: [],
-    unverifiedMembers: [],
-    selectedUnverifiedIds: [],
+    members: [],
+    selectedMembers: [],
+    unverifieds: [],
+    selectedUnverifieds: [],
   });
 
   export const convertUserData: FirestoreDataConverter<UserData> = {
@@ -140,8 +140,8 @@
     },
   };
 
-  export const convertTeamPrivateData: FirestoreDataConverter<TeamPrivateData> = {
-    toFirestore: (team: TeamPrivateData) => {
+  export const convertPrivateData: FirestoreDataConverter<PrivateData> = {
+    toFirestore: (team: PrivateData) => {
       return {
         goal: team.goal,
       };
