@@ -20,7 +20,7 @@
     ownerId: string;
   }
 
-  export interface PrivateData {
+  export interface TeamPrivateData {
     goal: number;
   }
 
@@ -36,7 +36,96 @@
     name: string;
   }
 
+  export interface ConvertData {
+    user: FirestoreDataConverter<UserData>;
+    team: FirestoreDataConverter<TeamData>;
+    teamPrivate: FirestoreDataConverter<TeamPrivateData>;
+    member: FirestoreDataConverter<MemberData>;
+    unverified: FirestoreDataConverter<UnverifiedData>;
+  }
+
+  export const convertData: ConvertData = {
+    user: {
+      toFirestore: (user: UserData) => {
+        return {
+          teamId: user.teamId,
+        };
+      },
+      fromFirestore: (snapshot, options) => {
+        const user = snapshot.data(options);
+        return {
+          id: snapshot.id,
+          teamId: user.teamId,
+        };
+      },
+    },
+    team: {
+      toFirestore: (team: TeamData) => {
+        return {
+          name: team.name,
+          number: team.number,
+          ownerId: team.ownerId,
+        };
+      },
+      fromFirestore: (snapshot, options) => {
+        const team = snapshot.data(options);
+        return {
+          id: snapshot.id,
+          name: team.name,
+          number: team.number,
+          ownerId: team.ownerId,
+        };
+      },
+    },
+    teamPrivate: {
+      toFirestore: (team: TeamPrivateData) => {
+        return {
+          goal: team.goal,
+        };
+      },
+      fromFirestore: (snapshot, options) => {
+        const team = snapshot.data(options);
+        return {
+          goal: team.goal,
+        };
+      },
+    },
+    member: {
+      toFirestore: (member: MemberData) => {
+        return {
+          logs: member.logs,
+          name: member.name,
+          tracking: member.tracking,
+        };
+      },
+      fromFirestore: (snapshot, options) => {
+        const member = snapshot.data(options);
+        return {
+          id: snapshot.id,
+          logs: member.logs,
+          name: member.name,
+          tracking: member.tracking,
+        };
+      },
+    },
+    unverified: {
+      toFirestore: (unverified: UnverifiedData) => {
+        return {
+          name: unverified.name,
+        };
+      },
+      fromFirestore: (snapshot, options) => {
+        const unverified = snapshot.data(options);
+        return {
+          id: snapshot.id,
+          name: unverified.name,
+        };
+      },
+    },
+  };
+
   export interface MT {
+    loaded: boolean;
     auth: Auth;
     user: {
       data: UserData;
@@ -48,9 +137,9 @@
       document: DocumentReference<TeamData>;
       collection: CollectionReference<TeamData>;
     };
-    private: {
-      data: PrivateData;
-      document: DocumentReference<PrivateData>;
+    teamPrivate: {
+      data: TeamPrivateData;
+      document: DocumentReference<TeamPrivateData>;
     };
     member: {
       data: MemberData;
@@ -62,9 +151,14 @@
       document: DocumentReference<UnverifiedData>;
       collection: CollectionReference<UnverifiedData>;
     };
+    cachedMembers: MemberData[];
+    selectedMembers: string[];
+    cachedUnverifieds: UnverifiedData[];
+    selectedUnverifieds: string[];
   }
 
   export const mt = writable<MT>({
+    loaded: false,
     auth: null,
     user: {
       data: null,
@@ -76,7 +170,7 @@
       document: null,
       collection: null,
     },
-    private: {
+    teamPrivate: {
       data: null,
       document: null,
     },
@@ -90,101 +184,9 @@
       document: null,
       collection: null,
     },
-  });
-
-  export interface MemberManagement {
-    members: MemberData[];
-    selectedMembers: string[];
-    unverifieds: UnverifiedData[];
-    selectedUnverifieds: string[];
-  }
-
-  export const memberManagement = writable<MemberManagement>({
-    members: [],
+    cachedMembers: [],
     selectedMembers: [],
-    unverifieds: [],
+    cachedUnverifieds: [],
     selectedUnverifieds: [],
   });
-
-  export const convertUserData: FirestoreDataConverter<UserData> = {
-    toFirestore: (user: UserData) => {
-      return {
-        teamId: user.teamId,
-      };
-    },
-    fromFirestore: (snapshot, options) => {
-      const user = snapshot.data(options);
-      return {
-        id: snapshot.id,
-        teamId: user.teamId,
-      };
-    },
-  };
-
-  export const convertTeamData: FirestoreDataConverter<TeamData> = {
-    toFirestore: (team: TeamData) => {
-      return {
-        name: team.name,
-        number: team.number,
-        ownerId: team.ownerId,
-      };
-    },
-    fromFirestore: (snapshot, options) => {
-      const team = snapshot.data(options);
-      return {
-        id: snapshot.id,
-        name: team.name,
-        number: team.number,
-        ownerId: team.ownerId,
-      };
-    },
-  };
-
-  export const convertPrivateData: FirestoreDataConverter<PrivateData> = {
-    toFirestore: (team: PrivateData) => {
-      return {
-        goal: team.goal,
-      };
-    },
-    fromFirestore: (snapshot, options) => {
-      const team = snapshot.data(options);
-      return {
-        goal: team.goal,
-      };
-    },
-  };
-
-  export const convertMemberData: FirestoreDataConverter<MemberData> = {
-    toFirestore: (member: MemberData) => {
-      return {
-        logs: member.logs,
-        name: member.name,
-        tracking: member.tracking,
-      };
-    },
-    fromFirestore: (snapshot, options) => {
-      const member = snapshot.data(options);
-      return {
-        id: snapshot.id,
-        logs: member.logs,
-        name: member.name,
-        tracking: member.tracking,
-      };
-    },
-  };
-
-  export const convertUnverifiedData: FirestoreDataConverter<UnverifiedData> = {
-    toFirestore: (unverified: UnverifiedData) => {
-      return {
-        name: unverified.name,
-      };
-    },
-    fromFirestore: (snapshot, options) => {
-      const unverified = snapshot.data(options);
-      return {
-        id: snapshot.id,
-        name: unverified.name,
-      };
-    },
-  };
 </script>

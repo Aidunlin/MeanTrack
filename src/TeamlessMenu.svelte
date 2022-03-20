@@ -1,24 +1,26 @@
 <script lang="ts">
   import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-  import { convertMemberData, convertPrivateData, convertUnverifiedData, mt } from "./Global.svelte";
+  import { convertData, mt } from "./Global.svelte";
 
   let joinTeamId: string;
   let createTeamName: string;
   let createTeamNumber: number;
 
   async function joinTeam() {
+    if (!joinTeamId) return;
+    $mt.loaded = false;
     $mt.team.document = doc($mt.team.collection, joinTeamId);
     $mt.team.data = (await getDoc($mt.team.document)).data();
     if ($mt.team.data) {
-      $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
+      $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertData.unverified);
       $mt.user.data.teamId = $mt.team.data.id;
       await updateDoc($mt.user.document, {
         teamId: $mt.user.data.teamId,
       }).catch(console.error);
       if ($mt.user.data.id == $mt.team.data.ownerId) {
-        $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertPrivateData);
-        $mt.private.data = (await getDoc($mt.private.document)).data();
-        $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
+        $mt.teamPrivate.document = doc($mt.team.document, "private/data").withConverter(convertData.teamPrivate);
+        $mt.teamPrivate.data = (await getDoc($mt.teamPrivate.document)).data();
+        $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
         $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
         $mt.member.data = (await getDoc($mt.member.document)).data();
       } else {
@@ -34,10 +36,12 @@
       $mt.team.document = null;
       $mt.team.data = null;
     }
+    $mt.loaded = true;
   }
 
   async function createTeam() {
     if (!(createTeamName && createTeamNumber)) return;
+    $mt.loaded = false;
     $mt.team.document = doc($mt.team.collection);
     $mt.team.data = {
       id: $mt.team.document.id,
@@ -46,12 +50,12 @@
       ownerId: $mt.user.data.id,
     };
     await setDoc($mt.team.document, $mt.team.data).catch(console.error);
-    $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertPrivateData);
-    $mt.private.data = {
+    $mt.teamPrivate.document = doc($mt.team.document, "private/data").withConverter(convertData.teamPrivate);
+    $mt.teamPrivate.data = {
       goal: 0,
     };
-    await setDoc($mt.private.document, $mt.private.data).catch(console.error);
-    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
+    await setDoc($mt.teamPrivate.document, $mt.teamPrivate.data).catch(console.error);
+    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
     $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
     $mt.member.data = {
       id: $mt.user.data.id,
@@ -60,11 +64,12 @@
       tracking: false,
     };
     await setDoc($mt.member.document, $mt.member.data).catch(console.error);
-    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
+    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertData.unverified);
     $mt.user.data.teamId = $mt.team.document.id;
     await updateDoc($mt.user.document, {
       teamId: $mt.user.data.teamId,
     }).catch(console.error);
+    $mt.loaded = true;
   }
 </script>
 
@@ -92,4 +97,4 @@
     <input bind:value={createTeamNumber} type="number" />
   </label>
 </p>
-<p><button disabled={!createTeamName || !createTeamNumber} on:click={createTeam}>Create</button></p>
+<p><button disabled={!(createTeamName && createTeamNumber)} on:click={createTeam}>Create</button></p>

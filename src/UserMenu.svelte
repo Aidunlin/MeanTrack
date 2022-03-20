@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+  import { signOut } from "firebase/auth";
   import { Timestamp, updateDoc } from "firebase/firestore";
   import { Log, mt } from "./Global.svelte";
 
@@ -11,7 +11,7 @@
     let currentLog: Log = {
       hours: 0,
       start: new Timestamp(0, 0),
-    }
+    };
     if ($mt.member.data.logs.length) {
       $mt.member.data.logs.forEach((log) => {
         if (log.start.toMillis() > currentLog.start.toMillis()) {
@@ -51,7 +51,7 @@
 
   function getTotalHours(): number {
     let totalHours = 0;
-    $mt.member.data.logs.forEach(log => {
+    $mt.member.data.logs.forEach((log) => {
       totalHours += log.hours;
     });
     return totalHours;

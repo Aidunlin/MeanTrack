@@ -5,9 +5,9 @@
   function editGoal() {
     let goalInput = parseInt(prompt("Enter a goal:"));
     if (goalInput) {
-      $mt.private.data.goal = isNaN(goalInput) ? $mt.private.data.goal : goalInput;
-      updateDoc($mt.private.document, {
-        goal: $mt.private.data.goal,
+      $mt.teamPrivate.data.goal = isNaN(goalInput) ? $mt.teamPrivate.data.goal : goalInput;
+      updateDoc($mt.teamPrivate.document, {
+        goal: $mt.teamPrivate.data.goal,
       }).catch(console.error);
     }
   }
@@ -23,6 +23,7 @@
 
   function leaveTeam() {
     if (!confirm(`Are you sure you want to leave ${$mt.team.data.name}?`)) return;
+    $mt.loaded = false;
     $mt.user.data.teamId = "";
     $mt.team.data = null;
     $mt.team.document = null;
@@ -31,7 +32,7 @@
       data: null,
       document: null,
     };
-    $mt.private = {
+    $mt.teamPrivate = {
       data: null,
       document: null,
     };
@@ -43,13 +44,14 @@
     updateDoc($mt.user.document, {
       teamId: $mt.user.data.teamId,
     }).catch(console.error);
+    $mt.loaded = true;
   }
 </script>
 
 <h2>Team {$mt.team.data.number}</h2>
 <p>{$mt.team.data.name}</p>
-{#if $mt.private.data && $mt.member.data}
-  <p>Goal: {$mt.private.data.goal} hours</p>
+{#if $mt.teamPrivate.data && $mt.member.data}
+  <p>Goal: {$mt.teamPrivate.data.goal} hours</p>
   <p>
     <button on:click={copyTeamId}>Copy id</button>
     {#if $mt.user.data.id == $mt.team.data.ownerId}

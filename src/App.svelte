@@ -2,14 +2,7 @@
   import { FirebaseApp, FirebaseOptions, initializeApp } from "firebase/app";
   import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
   import { collection, doc, Firestore, getDoc, getFirestore, setDoc } from "firebase/firestore";
-  import {
-    convertMemberData,
-    convertTeamData,
-    convertPrivateData,
-    convertUnverifiedData,
-    convertUserData,
-    mt,
-  } from "./Global.svelte";
+  import { convertData, mt } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
   import TeamMenu from "./TeamMenu.svelte";
   import TeamlessMenu from "./TeamlessMenu.svelte";
@@ -35,7 +28,6 @@
 
   let firebaseApp: FirebaseApp;
   let firestore: Firestore;
-  let loaded = false;
 
   function login() {
     signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
@@ -47,14 +39,14 @@
   }
 
   async function loadMember() {
-    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertMemberData);
+    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
     $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
     $mt.member.data = (await getDoc($mt.member.document)).data();
   }
 
   async function loadUnverified() {
-    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertUnverifiedData);
-    $mt.unverified.document = doc($mt.unverified.collection, "unverified").withConverter(convertUnverifiedData);
+    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertData.unverified);
+    $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
     $mt.unverified.data = (await getDoc($mt.unverified.document)).data();
   }
 
@@ -63,17 +55,18 @@
     $mt.team.data = (await getDoc($mt.team.document)).data();
     await loadUnverified();
     if (!$mt.unverified.data || $mt.user.data.id == $mt.team.data.ownerId) {
-      $mt.private.document = doc($mt.team.document, "private/data").withConverter(convertPrivateData);
-      $mt.private.data = (await getDoc($mt.private.document)).data();
+      $mt.teamPrivate.document = doc($mt.team.document, "private/data").withConverter(convertData.teamPrivate);
+      $mt.teamPrivate.data = (await getDoc($mt.teamPrivate.document)).data();
       await loadMember();
     }
   }
 
   async function loadUser(user: User) {
+    $mt.loaded = false;
     if (user) {
-      $mt.user.collection = collection(firestore, "users").withConverter(convertUserData);
-      $mt.team.collection = collection(firestore, "teams").withConverter(convertTeamData);
-      $mt.user.document = doc($mt.user.collection, user.uid).withConverter(convertUserData);
+      $mt.user.collection = collection(firestore, "users").withConverter(convertData.user);
+      $mt.team.collection = collection(firestore, "teams").withConverter(convertData.team);
+      $mt.user.document = doc($mt.user.collection, user.uid);
       let snapshot = await getDoc($mt.user.document);
       if (snapshot.exists()) {
         $mt.user.data = snapshot.data();
@@ -98,7 +91,7 @@
         document: null,
         collection: null,
       };
-      $mt.private = {
+      $mt.teamPrivate = {
         data: null,
         document: null,
       };
@@ -113,32 +106,28 @@
         collection: null,
       };
     }
-    loaded = true;
+    $mt.loaded = true;
   }
 
-  function load() {
-    firebaseApp = initializeApp(firebaseConfig);
-    $mt.auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
-    onAuthStateChanged($mt.auth, loadUser);
-  }
-
-  load();
+  firebaseApp = initializeApp(firebaseConfig);
+  $mt.auth = getAuth(firebaseApp);
+  firestore = getFirestore(firebaseApp);
+  onAuthStateChanged($mt.auth, loadUser);
 </script>
 
 <h1>MeanTrack</h1>
 <p>A work-in-progress FRC hour tracking web app</p>
 
-{#if loaded}
-  {#if $mt.member.data}
-    <UserMenu />
-  {/if}
+{#if $mt.loaded}
   {#if $mt.team.data}
+    {#if $mt.member.data}
+      <UserMenu />
+    {/if}
     <TeamMenu />
-    {#if $mt.private.data}
+    {#if $mt.teamPrivate.data}
       <MembersMenu />
     {/if}
-    {#if $mt.user.data.id == $mt.team.data.ownerId}
+    {#if $mt.user.data && $mt.user.data.id == $mt.team.data.ownerId}
       <UnverifiedsMenu />
     {/if}
   {:else if $mt.user.data}
@@ -147,6 +136,8 @@
   {:else}
     <p><button on:click={login}>Sign in</button></p>
   {/if}
+{:else}
+  <p>Loading...</p>
 {/if}
 
 <h2>About</h2>

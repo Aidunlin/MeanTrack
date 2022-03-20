@@ -1,6 +1,6 @@
 <script lang="ts">
   import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore";
-  import { Log, mt, memberManagement } from "./Global.svelte";
+  import { Log, mt } from "./Global.svelte";
 
   let sunday = getThisWeekSunday();
 
@@ -11,24 +11,24 @@
 
   function updateSunday(i: number) {
     sunday.setDate(sunday.getDate() + i);
-    $memberManagement.members = $memberManagement.members;
+    $mt.cachedMembers = $mt.cachedMembers;
     sunday = sunday;
   }
 
   function removeMembers() {
     if (!confirm("Are you sure?")) return;
-    let membersToRemove = $memberManagement.members.filter((member) => {
+    let membersToRemove = $mt.cachedMembers.filter((member) => {
       let isOwner = member.id == $mt.team.data.ownerId;
-      let isSelected = $memberManagement.selectedMembers.includes(member.id);
+      let isSelected = $mt.selectedMembers.includes(member.id);
       return !isOwner && isSelected;
     });
     membersToRemove.forEach(async (member) => {
       await deleteDoc(doc($mt.member.collection, member.id)).catch(console.error);
     });
-    $memberManagement.members = $memberManagement.members.filter((member) => {
-      return !$memberManagement.selectedMembers.includes(member.id);
+    $mt.cachedMembers = $mt.cachedMembers.filter((member) => {
+      return !$mt.selectedMembers.includes(member.id);
     });
-    $memberManagement.selectedMembers = [];
+    $mt.selectedMembers = [];
   }
 
   function getTotalHours(logs: Log[]): number {
@@ -56,10 +56,10 @@
     if (!$mt.member.collection) return;
     let membersQuery = query($mt.member.collection, orderBy("name"));
     getDocs(membersQuery).then((querySnapshot) => {
-      $memberManagement.members = [];
-      $memberManagement.selectedMembers = [];
+      $mt.cachedMembers = [];
+      $mt.selectedMembers = [];
       querySnapshot.forEach((memberDoc) => {
-        $memberManagement.members = [...$memberManagement.members, memberDoc.data()];
+        $mt.cachedMembers = [...$mt.cachedMembers, memberDoc.data()];
       });
     });
   }
@@ -77,9 +77,7 @@
   {/if}
   {#if $mt.user.data.id == $mt.team.data.ownerId}
     |
-    <button class="red" on:click={removeMembers} disabled={!$memberManagement.selectedMembers.length}>
-      Remove
-    </button>
+    <button class="red" on:click={removeMembers} disabled={!$mt.selectedMembers.length}>Remove</button>
   {/if}
 </p>
 <div class="table-wrap">
@@ -97,21 +95,18 @@
       </tr>
     </thead>
     <tbody>
-      {#each $memberManagement.members as member (member.id)}
+      {#each $mt.cachedMembers as member (member.id)}
         <tr>
           <td>
             <label>
               <input
                 type="checkbox"
-                bind:group={$memberManagement.selectedMembers}
+                bind:group={$mt.selectedMembers}
                 name="members"
                 value={member.id}
                 disabled={$mt.user.data.id != $mt.team.data.ownerId}
               />
               {member.name}
-              {#if member.name == $mt.member.data.name}
-                (you)
-              {/if}
             </label>
           </td>
           <td>{getTotalHours(member.logs).toFixed(1)}</td>
