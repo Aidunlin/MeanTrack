@@ -38,26 +38,18 @@
     signOut($mt.auth).catch(console.error);
   }
 
-  async function loadMember() {
-    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
-    $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
-    $mt.member.data = (await getDoc($mt.member.document)).data();
-  }
-
-  async function loadUnverified() {
-    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertData.unverified);
-    $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
-    $mt.unverified.data = (await getDoc($mt.unverified.document)).data();
-  }
-
   async function loadTeam(id: string) {
     $mt.team.document = doc($mt.team.collection, id);
     $mt.team.data = (await getDoc($mt.team.document)).data();
-    await loadUnverified();
+    $mt.unverified.collection = collection($mt.team.document, "unverifieds").withConverter(convertData.unverified);
+    $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
+    $mt.unverified.data = (await getDoc($mt.unverified.document)).data();
     if (!$mt.unverified.data || $mt.user.data.id == $mt.team.data.ownerId) {
       $mt.teamPrivate.document = doc($mt.team.document, "private/data").withConverter(convertData.teamPrivate);
       $mt.teamPrivate.data = (await getDoc($mt.teamPrivate.document)).data();
-      await loadMember();
+      $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
+      $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
+      $mt.member.data = (await getDoc($mt.member.document)).data();
     }
   }
 
@@ -119,20 +111,22 @@
 <p>A work-in-progress FRC hour tracking web app</p>
 
 {#if $mt.loaded}
-  {#if $mt.team.data}
-    {#if $mt.member.data}
-      <UserMenu />
-    {/if}
-    <TeamMenu />
-    {#if $mt.teamPrivate.data}
-      <MembersMenu />
-    {/if}
-    {#if $mt.user.data && $mt.user.data.id == $mt.team.data.ownerId}
-      <UnverifiedsMenu />
-    {/if}
-  {:else if $mt.user.data}
+  {#if $mt.user.data}
     <p><button on:click={logout}>Sign out</button></p>
-    <TeamlessMenu />
+    {#if $mt.team.data}
+      {#if $mt.member.data}
+        <UserMenu />
+      {/if}
+      <TeamMenu />
+      {#if $mt.teamPrivate.data}
+        <MembersMenu />
+      {/if}
+      {#if $mt.user.data && $mt.user.data.id == $mt.team.data.ownerId}
+        <UnverifiedsMenu />
+      {/if}
+    {:else}
+      <TeamlessMenu />
+    {/if}
   {:else}
     <p><button on:click={login}>Sign in</button></p>
   {/if}
@@ -148,10 +142,8 @@
   <a href={links.googleDoc} target="_blank">Google Doc</a>
 </p>
 <p>
-  Powered by
+  Made with
   <a href={links.firebase} target="_blank">Firebase</a>
   |
   <a href={links.svelte} target="_blank">Svelte</a>
-  |
-  <a href={links.newcss} target="_blank">new.css</a>
 </p>

@@ -1,34 +1,38 @@
 * {
+  box-sizing: border-box;
   color-scheme: dark light;
+  font-family: sans-serif;
 }
 
 body {
+  margin: auto;
   max-width: 1000px;
   padding: 1rem;
 }
 
-button.red {
-  background: hsl(0, 100%, 60%);
-}
-
-button.red:hover {
-  background: hsl(0, 100%, 40%);
-}
-
-button.green {
-  background: hsl(128, 100%, 60%);
-}
-
-button.green:hover {
-  background: hsl(128, 100%, 40%);
-}
-
 .table-wrap {
-  margin-bottom: 1rem;
   overflow-x: auto;
 }
 
 .table-wrap table {
-  margin-bottom: 0;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.table-wrap th, .table-wrap td {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.name-col {
+  width: 140px;
+}
+
+.hours-col {
+  width: min-content;
+}
+
+.day-col {
+  width: 8ch;
 }

@@ -46,13 +46,7 @@
 </script>
 
 <h3>Unverified</h3>
-<p>
-  <button on:click={refreshUnverifieds}>Refresh</button>
-  {#if $mt.cachedUnverifieds.length}
-    |
-    <button class="green" on:click={verifyMembers} disabled={!$mt.selectedUnverifieds.length}>Verify</button>
-  {/if}
-</p>
+<p><button on:click={refreshUnverifieds}>Refresh</button></p>
 {#each $mt.cachedUnverifieds as member (member.id)}
   <p>
     <label>
@@ -61,3 +55,6 @@
     </label>
   </p>
 {/each}
+{#if $mt.cachedUnverifieds.length}
+  <p><button class="green" on:click={verifyMembers} disabled={!$mt.selectedUnverifieds.length}>Verify</button></p>
+{/if}

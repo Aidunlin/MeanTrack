@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { updateDoc } from "firebase/firestore";
-  import { mt } from "./Global.svelte";
+  import { Timestamp, updateDoc } from "firebase/firestore";
+  import { Log, mt } from "./Global.svelte";
 
   function editGoal() {
-    let goalInput = parseInt(prompt("Enter a goal:"));
-    if (goalInput) {
-      $mt.teamPrivate.data.goal = isNaN(goalInput) ? $mt.teamPrivate.data.goal : goalInput;
+    let goalPrompt = prompt("Enter a goal:");
+    if (goalPrompt) {
+      $mt.teamPrivate.data.goal = parseInt(goalPrompt);
       updateDoc($mt.teamPrivate.document, {
         goal: $mt.teamPrivate.data.goal,
       }).catch(console.error);
@@ -57,10 +57,8 @@
     {#if $mt.user.data.id == $mt.team.data.ownerId}
       <button on:click={editGoal}>Edit goal</button>
     {/if}
-    |
-    <button on:click={leaveTeam}>Leave team</button>
   </p>
 {:else}
   <p>UNVERIFIED</p>
-  <button on:click={leaveTeam}>Leave team</button>
 {/if}
+<p><button on:click={leaveTeam}>Leave team</button></p>

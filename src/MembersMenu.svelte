@@ -9,8 +9,12 @@
     return new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
   }
 
-  function updateSunday(i: number) {
-    sunday.setDate(sunday.getDate() + i);
+  function updateSunday(i: number = null) {
+    if (i == null) {
+      sunday = getThisWeekSunday();
+    } else {
+      sunday.setDate(sunday.getDate() + i);
+    }
     $mt.cachedMembers = $mt.cachedMembers;
     sunday = sunday;
   }
@@ -70,28 +74,22 @@
 <h3>Members</h3>
 <p>
   <button on:click={refreshMembers}>Refresh</button>
-  {#if window.innerWidth > 600}
-    |
-    <button on:click={() => updateSunday(-7)}>&lt;&lt;</button>
-    <button on:click={() => updateSunday(7)}>&gt;&gt;</button>
-  {/if}
-  {#if $mt.user.data.id == $mt.team.data.ownerId}
-    |
-    <button class="red" on:click={removeMembers} disabled={!$mt.selectedMembers.length}>Remove</button>
-  {/if}
+  <button on:click={() => updateSunday(-7)} title="Previous week">&lt;&lt;</button>
+  <button on:click={() => updateSunday(7)} title="Next week">&gt;&gt;</button>
+  <button on:click={() => updateSunday()} disabled={sunday.toString() == getThisWeekSunday().toString()}>
+    This week
+  </button>
 </p>
 <div class="table-wrap">
   <table>
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Hours</th>
-        {#if window.innerWidth > 600}
-          {#each [...Array(7).keys()] as dayIndex}
-            {@const date = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + dayIndex)}
-            <th>{date.toLocaleDateString(undefined, { dateStyle: "short" })}</th>
-          {/each}
-        {/if}
+        <th class="name-col">Name</th>
+        <th class="hours-col">Hours</th>
+        {#each [...Array(7).keys()] as dayIndex}
+          {@const date = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + dayIndex)}
+          <th class="day-col">{date.toLocaleDateString(undefined, { dateStyle: "short" })}</th>
+        {/each}
       </tr>
     </thead>
     <tbody>
@@ -102,7 +100,6 @@
               <input
                 type="checkbox"
                 bind:group={$mt.selectedMembers}
-                name="members"
                 value={member.id}
                 disabled={$mt.user.data.id != $mt.team.data.ownerId}
               />
@@ -110,14 +107,15 @@
             </label>
           </td>
           <td>{getTotalHours(member.logs).toFixed(1)}</td>
-          {#if window.innerWidth > 600}
-            {#each [...Array(7).keys()] as dayIndex}
-              {@const hours = getOneDayHours(dayIndex, member.logs)}
-              <td>{hours ? hours.toFixed(1) : ""}</td>
-            {/each}
-          {/if}
+          {#each [...Array(7).keys()] as dayIndex}
+            {@const hours = getOneDayHours(dayIndex, member.logs)}
+            <td>{hours ? hours.toFixed(1) : ""}</td>
+          {/each}
         </tr>
       {/each}
     </tbody>
   </table>
 </div>
+{#if $mt.user.data.id == $mt.team.data.ownerId}
+  <p><button class="red" on:click={removeMembers} disabled={!$mt.selectedMembers.length}>Remove</button></p>
+{/if}

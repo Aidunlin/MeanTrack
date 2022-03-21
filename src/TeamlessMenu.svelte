@@ -12,7 +12,7 @@
     $mt.team.document = doc($mt.team.collection, joinTeamId);
     $mt.team.data = (await getDoc($mt.team.document)).data();
     if ($mt.team.data) {
-      $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertData.unverified);
+      $mt.unverified.collection = collection($mt.team.document, "unverifieds").withConverter(convertData.unverified);
       $mt.user.data.teamId = $mt.team.data.id;
       await updateDoc($mt.user.document, {
         teamId: $mt.user.data.teamId,
@@ -64,7 +64,7 @@
       tracking: false,
     };
     await setDoc($mt.member.document, $mt.member.data).catch(console.error);
-    $mt.unverified.collection = collection($mt.team.document, "unverified").withConverter(convertData.unverified);
+    $mt.unverified.collection = collection($mt.team.document, "unverifieds").withConverter(convertData.unverified);
     $mt.user.data.teamId = $mt.team.document.id;
     await updateDoc($mt.user.document, {
       teamId: $mt.user.data.teamId,

@@ -1,2 +1,2 @@
 # MeanTrack
-An FRC team hour tracking web app.
+A work-in-progress FRC hour tracking web app
