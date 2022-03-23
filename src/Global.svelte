@@ -1,7 +1,12 @@
 <script lang="ts" context="module">
   import { writable } from "svelte/store";
   import type { Auth } from "firebase/auth";
-  import type { CollectionReference, DocumentReference, FirestoreDataConverter, Timestamp } from "firebase/firestore";
+  import type {
+    CollectionReference,
+    DocumentReference,
+    FirestoreDataConverter,
+    Timestamp,
+  } from "firebase/firestore/lite";
 
   export interface Log {
     hours: number;
@@ -51,8 +56,8 @@
           teamId: user.teamId,
         };
       },
-      fromFirestore: (snapshot, options) => {
-        const user = snapshot.data(options);
+      fromFirestore: (snapshot) => {
+        const user = snapshot.data();
         return {
           id: snapshot.id,
           teamId: user.teamId,
@@ -67,8 +72,8 @@
           ownerId: team.ownerId,
         };
       },
-      fromFirestore: (snapshot, options) => {
-        const team = snapshot.data(options);
+      fromFirestore: (snapshot) => {
+        const team = snapshot.data();
         return {
           id: snapshot.id,
           name: team.name,
@@ -83,8 +88,8 @@
           goal: team.goal,
         };
       },
-      fromFirestore: (snapshot, options) => {
-        const team = snapshot.data(options);
+      fromFirestore: (snapshot) => {
+        const team = snapshot.data();
         return {
           goal: team.goal,
         };
@@ -98,8 +103,8 @@
           tracking: member.tracking,
         };
       },
-      fromFirestore: (snapshot, options) => {
-        const member = snapshot.data(options);
+      fromFirestore: (snapshot) => {
+        const member = snapshot.data();
         return {
           id: snapshot.id,
           logs: member.logs,
@@ -114,8 +119,8 @@
           name: unverified.name,
         };
       },
-      fromFirestore: (snapshot, options) => {
-        const unverified = snapshot.data(options);
+      fromFirestore: (snapshot) => {
+        const unverified = snapshot.data();
         return {
           id: snapshot.id,
           name: unverified.name,

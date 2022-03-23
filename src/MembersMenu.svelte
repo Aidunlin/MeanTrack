@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore";
+  import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore/lite";
   import { Log, mt } from "./Global.svelte";
 
   let sunday = getThisWeekSunday();

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { deleteDoc, doc, getDocs, orderBy, query, setDoc } from "firebase/firestore";
+  import { deleteDoc, doc, getDocs, orderBy, query, setDoc } from "firebase/firestore/lite";
   import { MemberData, mt } from "./Global.svelte";
 
   function verifyMembers() {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { FirebaseApp, FirebaseOptions, initializeApp } from "firebase/app";
   import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
-  import { collection, doc, Firestore, getDoc, getFirestore, setDoc } from "firebase/firestore";
+  import { collection, doc, Firestore, getDoc, getFirestore, setDoc } from "firebase/firestore/lite";
   import { convertData, mt } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
   import TeamMenu from "./TeamMenu.svelte";

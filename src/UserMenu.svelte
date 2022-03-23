@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Timestamp, updateDoc } from "firebase/firestore";
+  import { Timestamp, updateDoc } from "firebase/firestore/lite";
   import { Log, mt } from "./Global.svelte";
 
   let hoursDisplay: string;

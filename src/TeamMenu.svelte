@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Timestamp, updateDoc } from "firebase/firestore";
-  import { Log, mt } from "./Global.svelte";
+  import { updateDoc } from "firebase/firestore/lite";
+  import { mt } from "./Global.svelte";
 
   function editGoal() {
     let goalPrompt = prompt("Enter a goal:");

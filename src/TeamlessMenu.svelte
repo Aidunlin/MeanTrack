@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+  import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore/lite";
   import { convertData, mt } from "./Global.svelte";
 
   let joinTeamId: string;
