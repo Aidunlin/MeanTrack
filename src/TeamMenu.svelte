@@ -48,8 +48,12 @@
   }
 </script>
 
-<h2>Team {$mt.team.data.number}</h2>
-<p>{$mt.team.data.name}</p>
+<h2>
+  {#if !$mt.team.data.name.toLowerCase().includes("team")}
+    Team
+  {/if}
+  {$mt.team.data.name}
+</h2>
 {#if $mt.teamPrivate.data && $mt.member.data}
   <p>Goal: {$mt.teamPrivate.data.goal} hours</p>
   <p>

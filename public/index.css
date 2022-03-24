@@ -19,7 +19,8 @@ body {
   width: 100%;
 }
 
-.table-wrap th, .table-wrap td {
+.table-wrap th,
+.table-wrap td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -30,7 +31,7 @@ body {
 }
 
 .hours-col {
-  width: min-content;
+  width: 6ch;
 }
 
 .day-col {

@@ -21,7 +21,6 @@
   export interface TeamData {
     id: string;
     name: string;
-    number: number;
     ownerId: string;
   }
 
@@ -68,7 +67,6 @@
       toFirestore: (team: TeamData) => {
         return {
           name: team.name,
-          number: team.number,
           ownerId: team.ownerId,
         };
       },
@@ -77,7 +75,6 @@
         return {
           id: snapshot.id,
           name: team.name,
-          number: team.number,
           ownerId: team.ownerId,
         };
       },
@@ -131,7 +128,6 @@
 
   export interface MT {
     loaded: boolean;
-    auth: Auth;
     user: {
       data: UserData;
       document: DocumentReference<UserData>;
@@ -164,7 +160,6 @@
 
   export const mt = writable<MT>({
     loaded: false,
-    auth: null,
     user: {
       data: null,
       document: null,

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { FirebaseApp, FirebaseOptions, initializeApp } from "firebase/app";
+  import { initializeApp } from "firebase/app";
   import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
-  import { collection, doc, Firestore, getDoc, getFirestore, setDoc } from "firebase/firestore/lite";
+  import { collection, doc, getDoc, getFirestore, setDoc } from "firebase/firestore/lite";
   import { convertData, mt } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
   import TeamMenu from "./TeamMenu.svelte";
@@ -9,33 +9,13 @@
   import MembersMenu from "./MembersMenu.svelte";
   import UnverifiedsMenu from "./UnverifiedsMenu.svelte";
 
-  const links = {
-    github: "https://github.com/Aidunlin/MeanTrack",
-    googleDoc: "https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/edit#",
-    firebase: "https://firebase.google.com/",
-    svelte: "https://svelte.dev/",
-    newcss: "https://newcss.net/",
-  };
-
-  const firebaseConfig: FirebaseOptions = {
-    apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
-    authDomain: "meantrack-97d77.firebaseapp.com",
-    projectId: "meantrack-97d77",
-    storageBucket: "meantrack-97d77.appspot.com",
-    messagingSenderId: "267200471704",
-    appId: "1:267200471704:web:8a054875c674aebcd6a6ed",
-  };
-
-  let firebaseApp: FirebaseApp;
-  let firestore: Firestore;
-
   function login() {
-    signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
+    signInWithPopup(getAuth(), new GoogleAuthProvider()).catch(console.error);
   }
 
   function logout() {
     if (!confirm("Are you sure?")) return;
-    signOut($mt.auth).catch(console.error);
+    signOut(getAuth()).catch(console.error);
   }
 
   async function loadTeam(id: string) {
@@ -56,8 +36,8 @@
   async function loadUser(user: User) {
     $mt.loaded = false;
     if (user) {
-      $mt.user.collection = collection(firestore, "users").withConverter(convertData.user);
-      $mt.team.collection = collection(firestore, "teams").withConverter(convertData.team);
+      $mt.user.collection = collection(getFirestore(), "users").withConverter(convertData.user);
+      $mt.team.collection = collection(getFirestore(), "teams").withConverter(convertData.team);
       $mt.user.document = doc($mt.user.collection, user.uid);
       let snapshot = await getDoc($mt.user.document);
       if (snapshot.exists()) {
@@ -101,10 +81,15 @@
     $mt.loaded = true;
   }
 
-  firebaseApp = initializeApp(firebaseConfig);
-  $mt.auth = getAuth(firebaseApp);
-  firestore = getFirestore(firebaseApp);
-  onAuthStateChanged($mt.auth, loadUser);
+  initializeApp({
+    apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
+    authDomain: "meantrack-97d77.firebaseapp.com",
+    projectId: "meantrack-97d77",
+    storageBucket: "meantrack-97d77.appspot.com",
+    messagingSenderId: "267200471704",
+    appId: "1:267200471704:web:8a054875c674aebcd6a6ed",
+  });
+  onAuthStateChanged(getAuth(), loadUser);
 </script>
 
 <h1>MeanTrack</h1>
@@ -137,13 +122,13 @@
 <h2>About</h2>
 <p>
   View
-  <a href={links.github} target="_blank">GitHub Repo</a>
+  <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">Repo</a>
   |
-  <a href={links.googleDoc} target="_blank">Google Doc</a>
+  <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/" target="_blank">Doc</a>
 </p>
 <p>
   Made with
-  <a href={links.firebase} target="_blank">Firebase</a>
+  <a href="https://firebase.google.com/" target="_blank">Firebase</a>
   |
-  <a href={links.svelte} target="_blank">Svelte</a>
+  <a href="https://svelte.dev/" target="_blank">Svelte</a>
 </p>

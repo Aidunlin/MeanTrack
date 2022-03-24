@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { getAuth } from "firebase/auth";
   import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore/lite";
   import { convertData, mt } from "./Global.svelte";
 
   let joinTeamId: string;
   let createTeamName: string;
-  let createTeamNumber: number;
 
   async function joinTeam() {
     if (!joinTeamId) return;
@@ -27,7 +27,7 @@
         $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
         $mt.unverified.data = {
           id: $mt.user.data.id,
-          name: $mt.auth.currentUser.displayName,
+          name: getAuth().currentUser.displayName,
         };
         await setDoc($mt.unverified.document, $mt.unverified.data).catch(console.error);
       }
@@ -40,13 +40,12 @@
   }
 
   async function createTeam() {
-    if (!(createTeamName && createTeamNumber)) return;
+    if (!createTeamName) return;
     $mt.loaded = false;
     $mt.team.document = doc($mt.team.collection);
     $mt.team.data = {
       id: $mt.team.document.id,
       name: createTeamName,
-      number: createTeamNumber,
       ownerId: $mt.user.data.id,
     };
     await setDoc($mt.team.document, $mt.team.data).catch(console.error);
@@ -60,7 +59,7 @@
     $mt.member.data = {
       id: $mt.user.data.id,
       logs: [],
-      name: $mt.auth.currentUser.displayName,
+      name: getAuth().currentUser.displayName,
       tracking: false,
     };
     await setDoc($mt.member.document, $mt.member.data).catch(console.error);
@@ -90,11 +89,4 @@
     <input bind:value={createTeamName} />
   </label>
 </p>
-<p>
-  <label>
-    Team number
-    <br />
-    <input bind:value={createTeamNumber} type="number" />
-  </label>
-</p>
-<p><button disabled={!(createTeamName && createTeamNumber)} on:click={createTeam}>Create</button></p>
+<p><button disabled={!createTeamName} on:click={createTeam}>Create</button></p>
