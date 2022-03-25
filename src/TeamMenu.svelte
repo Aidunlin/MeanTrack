@@ -29,17 +29,18 @@
     $mt.team.document = null;
     $mt.member = {
       collection: null,
-      data: null,
       document: null,
+      data: null,
     };
     $mt.teamPrivate = {
-      data: null,
+      collection: null,
       document: null,
+      data: null,
     };
     $mt.unverified = {
       collection: null,
-      data: null,
       document: null,
+      data: null,
     };
     updateDoc($mt.user.document, {
       teamId: $mt.user.data.teamId,

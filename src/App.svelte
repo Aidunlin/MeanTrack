@@ -10,12 +10,12 @@
   import UnverifiedsMenu from "./UnverifiedsMenu.svelte";
 
   function login() {
-    signInWithPopup(getAuth(), new GoogleAuthProvider()).catch(console.error);
+    signInWithPopup($mt.firebase.auth, new GoogleAuthProvider()).catch(console.error);
   }
 
   function logout() {
     if (!confirm("Are you sure?")) return;
-    signOut(getAuth()).catch(console.error);
+    signOut($mt.firebase.auth).catch(console.error);
   }
 
   async function loadTeam(id: string) {
@@ -25,7 +25,8 @@
     $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
     $mt.unverified.data = (await getDoc($mt.unverified.document)).data();
     if (!$mt.unverified.data || $mt.user.data.id == $mt.team.data.ownerId) {
-      $mt.teamPrivate.document = doc($mt.team.document, "private/data").withConverter(convertData.teamPrivate);
+      $mt.teamPrivate.collection = collection($mt.team.document, "private").withConverter(convertData.teamPrivate);
+      $mt.teamPrivate.document = doc($mt.teamPrivate.collection, "data");
       $mt.teamPrivate.data = (await getDoc($mt.teamPrivate.document)).data();
       $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
       $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
@@ -66,6 +67,7 @@
       $mt.teamPrivate = {
         data: null,
         document: null,
+        collection: null,
       };
       $mt.member = {
         data: null,
@@ -81,15 +83,23 @@
     $mt.loaded = true;
   }
 
-  initializeApp({
-    apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
-    authDomain: "meantrack-97d77.firebaseapp.com",
-    projectId: "meantrack-97d77",
-    storageBucket: "meantrack-97d77.appspot.com",
-    messagingSenderId: "267200471704",
-    appId: "1:267200471704:web:8a054875c674aebcd6a6ed",
-  });
-  onAuthStateChanged(getAuth(), loadUser);
+  let loadMessage = "Loading...";
+
+  if ("onLine" in navigator && navigator.onLine) {
+    $mt.firebase.app = initializeApp({
+      apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
+      authDomain: "meantrack-97d77.firebaseapp.com",
+      projectId: "meantrack-97d77",
+      storageBucket: "meantrack-97d77.appspot.com",
+      messagingSenderId: "267200471704",
+      appId: "1:267200471704:web:8a054875c674aebcd6a6ed",
+    });
+    $mt.firebase.auth = getAuth($mt.firebase.app);
+    $mt.firebase.firestore = getFirestore($mt.firebase.app);
+    onAuthStateChanged($mt.firebase.auth, loadUser);
+  } else {
+    loadMessage = "OFFLINE - MeanTrack needs an internet connection";
+  }
 </script>
 
 <h1>MeanTrack</h1>
@@ -116,7 +126,7 @@
     <p><button on:click={login}>Sign in</button></p>
   {/if}
 {:else}
-  <p>Loading...</p>
+  <p>{loadMessage}</p>
 {/if}
 
 <h2>About</h2>

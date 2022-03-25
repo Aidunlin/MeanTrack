@@ -29,10 +29,13 @@
       let difference = Timestamp.now().toMillis() - currentLog.start.toMillis();
       currentLog.hours = difference / 1000 / 3600;
     } else {
-      $mt.member.data.logs = [...$mt.member.data.logs, {
-        hours: 0,
-        start: Timestamp.now(),
-      }];
+      $mt.member.data.logs = [
+        ...$mt.member.data.logs,
+        {
+          hours: 0,
+          start: Timestamp.now(),
+        },
+      ];
     }
     $mt.member.data.tracking = !$mt.member.data.tracking;
     updateDoc($mt.member.document, {

@@ -1,9 +1,11 @@
 <script lang="ts" context="module">
-  import { writable } from "svelte/store";
+  import type { FirebaseApp } from "firebase/app";
   import type { Auth } from "firebase/auth";
+  import { writable } from "svelte/store";
   import type {
     CollectionReference,
     DocumentReference,
+    Firestore,
     FirestoreDataConverter,
     Timestamp,
   } from "firebase/firestore/lite";
@@ -128,6 +130,11 @@
 
   export interface MT {
     loaded: boolean;
+    firebase: {
+      app: FirebaseApp;
+      auth: Auth;
+      firestore: Firestore;
+    };
     user: {
       data: UserData;
       document: DocumentReference<UserData>;
@@ -141,6 +148,7 @@
     teamPrivate: {
       data: TeamPrivateData;
       document: DocumentReference<TeamPrivateData>;
+      collection: CollectionReference<TeamPrivateData>;
     };
     member: {
       data: MemberData;
@@ -160,6 +168,11 @@
 
   export const mt = writable<MT>({
     loaded: false,
+    firebase: {
+      app: null,
+      auth: null,
+      firestore: null,
+    },
     user: {
       data: null,
       document: null,
@@ -173,6 +186,7 @@
     teamPrivate: {
       data: null,
       document: null,
+      collection: null,
     },
     member: {
       data: null,

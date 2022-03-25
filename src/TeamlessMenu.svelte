@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { getAuth } from "firebase/auth";
   import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore/lite";
   import { convertData, mt } from "./Global.svelte";
 
+  let nameInput = $mt.firebase.auth.currentUser.displayName;
   let joinTeamId: string;
   let createTeamName: string;
 
   async function joinTeam() {
-    if (!joinTeamId) return;
+    if (!(joinTeamId && nameInput)) return;
     $mt.loaded = false;
     $mt.team.document = doc($mt.team.collection, joinTeamId);
     $mt.team.data = (await getDoc($mt.team.document)).data();
@@ -18,7 +18,8 @@
         teamId: $mt.user.data.teamId,
       }).catch(console.error);
       if ($mt.user.data.id == $mt.team.data.ownerId) {
-        $mt.teamPrivate.document = doc($mt.team.document, "private/data").withConverter(convertData.teamPrivate);
+        $mt.teamPrivate.collection = collection($mt.team.document, "private").withConverter(convertData.teamPrivate);
+        $mt.teamPrivate.document = doc($mt.teamPrivate.collection, "data");
         $mt.teamPrivate.data = (await getDoc($mt.teamPrivate.document)).data();
         $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
         $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
@@ -27,7 +28,7 @@
         $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
         $mt.unverified.data = {
           id: $mt.user.data.id,
-          name: getAuth().currentUser.displayName,
+          name: nameInput,
         };
         await setDoc($mt.unverified.document, $mt.unverified.data).catch(console.error);
       }
@@ -40,7 +41,7 @@
   }
 
   async function createTeam() {
-    if (!createTeamName) return;
+    if (!(createTeamName && nameInput)) return;
     $mt.loaded = false;
     $mt.team.document = doc($mt.team.collection);
     $mt.team.data = {
@@ -49,7 +50,8 @@
       ownerId: $mt.user.data.id,
     };
     await setDoc($mt.team.document, $mt.team.data).catch(console.error);
-    $mt.teamPrivate.document = doc($mt.team.document, "private/data").withConverter(convertData.teamPrivate);
+    $mt.teamPrivate.collection = collection($mt.team.document, "private").withConverter(convertData.teamPrivate);
+    $mt.teamPrivate.document = doc($mt.teamPrivate.collection, "data");
     $mt.teamPrivate.data = {
       goal: 0,
     };
@@ -59,7 +61,7 @@
     $mt.member.data = {
       id: $mt.user.data.id,
       logs: [],
-      name: getAuth().currentUser.displayName,
+      name: nameInput,
       tracking: false,
     };
     await setDoc($mt.member.document, $mt.member.data).catch(console.error);
@@ -72,6 +74,13 @@
   }
 </script>
 
+<p>
+  <label>
+    Your name
+    <br />
+    <input bind:value={nameInput} />
+  </label>
+</p>
 <h2>Join a team</h2>
 <p>
   <label>
@@ -80,7 +89,7 @@
     <input bind:value={joinTeamId} />
   </label>
 </p>
-<p><button disabled={!joinTeamId} on:click={joinTeam}>Join</button></p>
+<p><button disabled={!(joinTeamId && nameInput)} on:click={joinTeam}>Join</button></p>
 <h2>Create a team</h2>
 <p>
   <label>
@@ -89,4 +98,4 @@
     <input bind:value={createTeamName} />
   </label>
 </p>
-<p><button disabled={!createTeamName} on:click={createTeam}>Create</button></p>
+<p><button disabled={!(createTeamName && nameInput)} on:click={createTeam}>Create</button></p>
