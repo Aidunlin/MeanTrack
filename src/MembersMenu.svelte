@@ -1,6 +1,6 @@
 <script lang="ts">
   import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore/lite";
-  import { Log, mt } from "./Global.svelte";
+  import { Log, MemberData, mt } from "./Global.svelte";
 
   let sunday = getThisWeekSunday();
 
@@ -9,14 +9,14 @@
     return new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
   }
 
-  function updateSunday(i: number = null) {
+  function updateSunday(i?: number) {
     if (i == null) {
       sunday = getThisWeekSunday();
     } else {
       sunday.setDate(sunday.getDate() + i);
+      sunday = sunday;
     }
     $mt.cachedMembers = $mt.cachedMembers;
-    sunday = sunday;
   }
 
   function removeMembers() {
@@ -63,7 +63,8 @@
       $mt.cachedMembers = [];
       $mt.selectedMembers = [];
       querySnapshot.forEach((memberDoc) => {
-        $mt.cachedMembers = [...$mt.cachedMembers, memberDoc.data()];
+        let memberData: MemberData & { id: string } = { ...memberDoc.data(), id: memberDoc.id };
+        $mt.cachedMembers = [...$mt.cachedMembers, memberData];
       });
     });
   }
@@ -101,7 +102,7 @@
                 type="checkbox"
                 bind:group={$mt.selectedMembers}
                 value={member.id}
-                disabled={$mt.user.data.id != $mt.team.data.ownerId}
+                disabled={$mt.user.document.id != $mt.team.data.ownerId}
               />
               {member.name}
             </label>
@@ -116,6 +117,6 @@
     </tbody>
   </table>
 </div>
-{#if $mt.user.data.id == $mt.team.data.ownerId}
+{#if $mt.user.document.id == $mt.team.data.ownerId}
   <p><button class="red" on:click={removeMembers} disabled={!$mt.selectedMembers.length}>Remove</button></p>
 {/if}

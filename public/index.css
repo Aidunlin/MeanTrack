@@ -1,7 +1,11 @@
 * {
   box-sizing: border-box;
-  color-scheme: dark light;
+  color-scheme: light dark;
   font-family: sans-serif;
+}
+
+html {
+  touch-action: pan-y;
 }
 
 body {

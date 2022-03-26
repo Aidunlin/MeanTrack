@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Timestamp, updateDoc } from "firebase/firestore/lite";
+  import { Timestamp } from "firebase/firestore/lite";
   import { Log, mt } from "./Global.svelte";
 
   let hoursDisplay: string;
@@ -23,11 +23,14 @@
     }
   }
 
+  function getTimestampDifference(a: Timestamp, b: Timestamp) {
+    return Math.abs(a.toMillis() - b.toMillis()) / 1000 / 3600;
+  }
+
   function toggleTracking() {
     if ($mt.member.data.tracking) {
       let currentLog = getCurrentLog();
-      let difference = Timestamp.now().toMillis() - currentLog.start.toMillis();
-      currentLog.hours = difference / 1000 / 3600;
+      currentLog.hours = getTimestampDifference(Timestamp.now(), currentLog.start);
     } else {
       $mt.member.data.logs = [
         ...$mt.member.data.logs,
@@ -37,11 +40,10 @@
         },
       ];
     }
-    $mt.member.data.tracking = !$mt.member.data.tracking;
-    updateDoc($mt.member.document, {
+    $mt.member.updateData({
+      tracking: !$mt.member.data.tracking,
       logs: $mt.member.data.logs,
-      tracking: $mt.member.data.tracking,
-    }).catch(console.error);
+    });
   }
 
   function getTotalHours(): number {
@@ -54,7 +56,7 @@
     if ($mt.member.data) {
       hoursDisplay = getTotalHours().toFixed(1);
       lastTimestamp = getCurrentLog().start;
-      newHoursDisplay = (Timestamp.now().toMillis() - lastTimestamp.toMillis()) / 1000 / 3600;
+      newHoursDisplay = getTimestampDifference(Timestamp.now(), lastTimestamp);
     }
   }
 </script>

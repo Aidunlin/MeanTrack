@@ -1,12 +1,12 @@
 <script lang="ts">
   import { deleteDoc, doc, getDocs, orderBy, query, setDoc } from "firebase/firestore/lite";
-  import { MemberData, mt } from "./Global.svelte";
+  import { MemberData, mt, UnverifiedData } from "./Global.svelte";
 
   function verifyMembers() {
     if (!confirm("Are you sure?")) return;
     let selectedUnverifieds = $mt.cachedUnverifieds
       .filter((member) => $mt.selectedUnverifieds.includes(member.id))
-      .map((unverified): MemberData => {
+      .map((unverified): MemberData & { id: string } => {
         return {
           id: unverified.id,
           logs: [],
@@ -37,7 +37,10 @@
       $mt.cachedUnverifieds = [];
       $mt.selectedUnverifieds = [];
       querySnapshot.forEach((unverifiedDoc) => {
-        $mt.cachedUnverifieds = [...$mt.cachedUnverifieds, unverifiedDoc.data()];
+        if (!$mt.cachedMembers.some((member) => member.id == unverifiedDoc.id)) {
+          let unverified: UnverifiedData & { id: string } = { ...unverifiedDoc.data(), id: unverifiedDoc.id };
+          $mt.cachedUnverifieds = [...$mt.cachedUnverifieds, unverified];
+        }
       });
     });
   }

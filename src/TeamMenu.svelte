@@ -1,50 +1,34 @@
 <script lang="ts">
-  import { updateDoc } from "firebase/firestore/lite";
   import { mt } from "./Global.svelte";
 
   function editGoal() {
     let goalPrompt = prompt("Enter a goal:");
     if (goalPrompt) {
-      $mt.teamPrivate.data.goal = parseInt(goalPrompt);
-      updateDoc($mt.teamPrivate.document, {
+      $mt.teamPrivate.updateData({
         goal: $mt.teamPrivate.data.goal,
-      }).catch(console.error);
+      });
     }
   }
 
   function copyTeamId() {
     if ("clipboard" in navigator) {
-      navigator.clipboard.writeText($mt.team.data.id);
+      navigator.clipboard.writeText($mt.user.data.teamId);
       alert("Copied!");
     } else {
-      prompt("Copy the id:", $mt.team.data.id);
+      prompt("Copy the id:", $mt.user.data.teamId);
     }
   }
 
   function leaveTeam() {
     if (!confirm(`Are you sure you want to leave ${$mt.team.data.name}?`)) return;
     $mt.loaded = false;
-    $mt.user.data.teamId = "";
-    $mt.team.data = null;
-    $mt.team.document = null;
-    $mt.member = {
-      collection: null,
-      document: null,
-      data: null,
-    };
-    $mt.teamPrivate = {
-      collection: null,
-      document: null,
-      data: null,
-    };
-    $mt.unverified = {
-      collection: null,
-      document: null,
-      data: null,
-    };
-    updateDoc($mt.user.document, {
-      teamId: $mt.user.data.teamId,
-    }).catch(console.error);
+    $mt.user.updateData({
+      teamId: "",
+    });
+    $mt.team = null;
+    $mt.member = null;
+    $mt.teamPrivate = null;
+    $mt.unverified = null;
     $mt.loaded = true;
   }
 </script>
@@ -55,11 +39,11 @@
   {/if}
   {$mt.team.data.name}
 </h2>
-{#if $mt.teamPrivate.data && $mt.member.data}
+{#if $mt.teamPrivate?.data && $mt.member?.data}
   <p>Goal: {$mt.teamPrivate.data.goal} hours</p>
   <p>
     <button on:click={copyTeamId}>Copy id</button>
-    {#if $mt.user.data.id == $mt.team.data.ownerId}
+    {#if $mt.user.document.id == $mt.team.data.ownerId}
       <button on:click={editGoal}>Edit goal</button>
     {/if}
   </p>

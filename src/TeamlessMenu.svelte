@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { collection, doc, getDoc, setDoc, updateDoc } from "firebase/firestore/lite";
-  import { convertData, mt } from "./Global.svelte";
+  import { doc } from "firebase/firestore/lite";
+  import { FSDataSet, mt } from "./Global.svelte";
 
   let nameInput = $mt.firebase.auth.currentUser.displayName;
   let joinTeamId: string;
@@ -9,33 +9,26 @@
   async function joinTeam() {
     if (!(joinTeamId && nameInput)) return;
     $mt.loaded = false;
-    $mt.team.document = doc($mt.team.collection, joinTeamId);
-    $mt.team.data = (await getDoc($mt.team.document)).data();
-    if ($mt.team.data) {
-      $mt.unverified.collection = collection($mt.team.document, "unverifieds").withConverter(convertData.unverified);
-      $mt.user.data.teamId = $mt.team.data.id;
-      await updateDoc($mt.user.document, {
-        teamId: $mt.user.data.teamId,
-      }).catch(console.error);
-      if ($mt.user.data.id == $mt.team.data.ownerId) {
-        $mt.teamPrivate.collection = collection($mt.team.document, "private").withConverter(convertData.teamPrivate);
-        $mt.teamPrivate.document = doc($mt.teamPrivate.collection, "data");
-        $mt.teamPrivate.data = (await getDoc($mt.teamPrivate.document)).data();
-        $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
-        $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
-        $mt.member.data = (await getDoc($mt.member.document)).data();
+    $mt.team = new FSDataSet($mt.firebase.firestore, "teams", joinTeamId);
+    if (await $mt.team.refreshData()) {
+      $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
+      await $mt.user.updateData({
+        teamId: $mt.team.document.id,
+      });
+      if ($mt.user.document.id == $mt.team.data.ownerId) {
+        $mt.teamPrivate = new FSDataSet($mt.team.document, "private", "data");
+        await $mt.teamPrivate.refreshData();
+        $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
+        await $mt.member.refreshData();
       } else {
-        $mt.unverified.document = doc($mt.unverified.collection, $mt.user.data.id);
+        $mt.unverified.document = doc($mt.unverified.collection, $mt.user.document.id);
         $mt.unverified.data = {
-          id: $mt.user.data.id,
           name: nameInput,
         };
-        await setDoc($mt.unverified.document, $mt.unverified.data).catch(console.error);
       }
     } else {
+      $mt.team = null;
       alert("Team not found!");
-      $mt.team.document = null;
-      $mt.team.data = null;
     }
     $mt.loaded = true;
   }
@@ -43,33 +36,26 @@
   async function createTeam() {
     if (!(createTeamName && nameInput)) return;
     $mt.loaded = false;
+    $mt.team = new FSDataSet($mt.firebase.firestore, "teams");
     $mt.team.document = doc($mt.team.collection);
     $mt.team.data = {
-      id: $mt.team.document.id,
       name: createTeamName,
-      ownerId: $mt.user.data.id,
+      ownerId: $mt.user.document.id,
     };
-    await setDoc($mt.team.document, $mt.team.data).catch(console.error);
-    $mt.teamPrivate.collection = collection($mt.team.document, "private").withConverter(convertData.teamPrivate);
-    $mt.teamPrivate.document = doc($mt.teamPrivate.collection, "data");
+    $mt.teamPrivate = new FSDataSet($mt.team.document, "private", "data");
     $mt.teamPrivate.data = {
       goal: 0,
     };
-    await setDoc($mt.teamPrivate.document, $mt.teamPrivate.data).catch(console.error);
-    $mt.member.collection = collection($mt.team.document, "members").withConverter(convertData.member);
-    $mt.member.document = doc($mt.member.collection, $mt.user.data.id);
+    $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
     $mt.member.data = {
-      id: $mt.user.data.id,
       logs: [],
       name: nameInput,
       tracking: false,
     };
-    await setDoc($mt.member.document, $mt.member.data).catch(console.error);
-    $mt.unverified.collection = collection($mt.team.document, "unverifieds").withConverter(convertData.unverified);
-    $mt.user.data.teamId = $mt.team.document.id;
-    await updateDoc($mt.user.document, {
-      teamId: $mt.user.data.teamId,
-    }).catch(console.error);
+    $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
+    await $mt.user.updateData({
+      teamId: $mt.team.document.id,
+    });
     $mt.loaded = true;
   }
 </script>

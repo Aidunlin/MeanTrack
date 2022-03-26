@@ -2,12 +2,19 @@
   import type { FirebaseApp } from "firebase/app";
   import type { Auth } from "firebase/auth";
   import { writable } from "svelte/store";
-  import type {
+  import {
+    collection,
     CollectionReference,
+    doc,
+    DocumentData,
     DocumentReference,
     Firestore,
     FirestoreDataConverter,
+    getDoc,
+    setDoc,
     Timestamp,
+    UpdateData,
+    updateDoc,
   } from "firebase/firestore/lite";
 
   export interface Log {
@@ -16,12 +23,10 @@
   }
 
   export interface UserData {
-    id: string;
     teamId: string;
   }
 
   export interface TeamData {
-    id: string;
     name: string;
     ownerId: string;
   }
@@ -31,102 +36,66 @@
   }
 
   export interface MemberData {
-    id: string;
     logs: Log[];
     name: string;
     tracking: boolean;
   }
 
   export interface UnverifiedData {
-    id: string;
     name: string;
   }
 
-  export interface ConvertData {
-    user: FirestoreDataConverter<UserData>;
-    team: FirestoreDataConverter<TeamData>;
-    teamPrivate: FirestoreDataConverter<TeamPrivateData>;
-    member: FirestoreDataConverter<MemberData>;
-    unverified: FirestoreDataConverter<UnverifiedData>;
-  }
+  export class FSDataSet<T> {
+    collection: CollectionReference<T>;
+    document: DocumentReference<T>;
+    private _data: T;
 
-  export const convertData: ConvertData = {
-    user: {
-      toFirestore: (user: UserData) => {
-        return {
-          teamId: user.teamId,
-        };
-      },
-      fromFirestore: (snapshot) => {
-        const user = snapshot.data();
-        return {
-          id: snapshot.id,
-          teamId: user.teamId,
-        };
-      },
-    },
-    team: {
-      toFirestore: (team: TeamData) => {
-        return {
-          name: team.name,
-          ownerId: team.ownerId,
-        };
-      },
-      fromFirestore: (snapshot) => {
-        const team = snapshot.data();
-        return {
-          id: snapshot.id,
-          name: team.name,
-          ownerId: team.ownerId,
-        };
-      },
-    },
-    teamPrivate: {
-      toFirestore: (team: TeamPrivateData) => {
-        return {
-          goal: team.goal,
-        };
-      },
-      fromFirestore: (snapshot) => {
-        const team = snapshot.data();
-        return {
-          goal: team.goal,
-        };
-      },
-    },
-    member: {
-      toFirestore: (member: MemberData) => {
-        return {
-          logs: member.logs,
-          name: member.name,
-          tracking: member.tracking,
-        };
-      },
-      fromFirestore: (snapshot) => {
-        const member = snapshot.data();
-        return {
-          id: snapshot.id,
-          logs: member.logs,
-          name: member.name,
-          tracking: member.tracking,
-        };
-      },
-    },
-    unverified: {
-      toFirestore: (unverified: UnverifiedData) => {
-        return {
-          name: unverified.name,
-        };
-      },
-      fromFirestore: (snapshot) => {
-        const unverified = snapshot.data();
-        return {
-          id: snapshot.id,
-          name: unverified.name,
-        };
-      },
-    },
-  };
+    public get data(): T {
+      return this._data;
+    }
+    public set data(d: T) {
+      if (this.document) {
+        this._data = d;
+        setDoc(this.document, this._data).catch(console.error);
+      }
+    }
+
+    private getConverter<T>(): FirestoreDataConverter<T> {
+      return {
+        toFirestore: (data: T) => data as DocumentData,
+        fromFirestore: (snapshot) => snapshot.data() as T,
+      };
+    }
+
+    constructor(firestore: Firestore, collId: string, docId?: string);
+    constructor(parent: DocumentReference, collId: string, docId?: string);
+    constructor(firestoreOrParent: any, collId: string, docId?: string) {
+      this.collection = collection(firestoreOrParent, collId).withConverter(this.getConverter<T>());
+      if (docId) {
+        this.document = doc(this.collection, docId);
+      }
+    }
+
+    /** Gets the latest data from Firestore */
+    async refreshData() {
+      if (this.document) {
+        await getDoc(this.document)
+          .then(async (snapshot) => {
+            this._data = snapshot.data();
+          })
+          .catch(console.error);
+      }
+      return this._data;
+    }
+
+    /** Updates part/all of data and corresponding Firestore document */
+    async updateData(data: UpdateData<T>) {
+      if (this.document) {
+        Object.assign(this._data, data);
+        await updateDoc(this.document, data).catch(console.error);
+      }
+    }
+  }
 
   export interface MT {
     loaded: boolean;
@@ -135,34 +104,14 @@
       auth: Auth;
       firestore: Firestore;
     };
-    user: {
-      data: UserData;
-      document: DocumentReference<UserData>;
-      collection: CollectionReference<UserData>;
-    };
-    team: {
-      data: TeamData;
-      document: DocumentReference<TeamData>;
-      collection: CollectionReference<TeamData>;
-    };
-    teamPrivate: {
-      data: TeamPrivateData;
-      document: DocumentReference<TeamPrivateData>;
-      collection: CollectionReference<TeamPrivateData>;
-    };
-    member: {
-      data: MemberData;
-      document: DocumentReference<MemberData>;
-      collection: CollectionReference<MemberData>;
-    };
-    unverified: {
-      data: UnverifiedData;
-      document: DocumentReference<UnverifiedData>;
-      collection: CollectionReference<UnverifiedData>;
-    };
-    cachedMembers: MemberData[];
+    user: FSDataSet<UserData>;
+    team: FSDataSet<TeamData>;
+    teamPrivate: FSDataSet<TeamPrivateData>;
+    member: FSDataSet<MemberData>;
+    unverified: FSDataSet<UnverifiedData>;
+    cachedMembers: (MemberData & { id: string })[];
     selectedMembers: string[];
-    cachedUnverifieds: UnverifiedData[];
+    cachedUnverifieds: (UnverifiedData & { id: string })[];
     selectedUnverifieds: string[];
   }
 
@@ -173,31 +122,11 @@
       auth: null,
       firestore: null,
     },
-    user: {
-      data: null,
-      document: null,
-      collection: null,
-    },
-    team: {
-      data: null,
-      document: null,
-      collection: null,
-    },
-    teamPrivate: {
-      data: null,
-      document: null,
-      collection: null,
-    },
-    member: {
-      data: null,
-      document: null,
-      collection: null,
-    },
-    unverified: {
-      data: null,
-      document: null,
-      collection: null,
-    },
+    user: null,
+    team: null,
+    teamPrivate: null,
+    member: null,
+    unverified: null,
     cachedMembers: [],
     selectedMembers: [],
     cachedUnverifieds: [],
