@@ -1,17 +1,18 @@
 <script lang="ts">
   import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore/lite";
-  import { Log, MemberData, mt } from "./Global.svelte";
+  import { Log, mt } from "./Global.svelte";
 
-  let sunday = getThisWeekSunday();
+  let selectedMembers: string[] = [];
+  let sunday = thisSunday();
 
-  function getThisWeekSunday() {
+  function thisSunday() {
     let today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
   }
 
   function updateSunday(i?: number) {
     if (i == null) {
-      sunday = getThisWeekSunday();
+      sunday = thisSunday();
     } else {
       sunday.setDate(sunday.getDate() + i);
       sunday = sunday;
@@ -21,18 +22,14 @@
 
   function removeMembers() {
     if (!confirm("Are you sure?")) return;
-    let membersToRemove = $mt.cachedMembers.filter((member) => {
-      let isOwner = member.id == $mt.team.data.ownerId;
-      let isSelected = $mt.selectedMembers.includes(member.id);
-      return !isOwner && isSelected;
-    });
-    membersToRemove.forEach(async (member) => {
-      await deleteDoc(doc($mt.member.collection, member.id)).catch(console.error);
-    });
     $mt.cachedMembers = $mt.cachedMembers.filter((member) => {
-      return !$mt.selectedMembers.includes(member.id);
+      let shouldRemove = selectedMembers.includes(member.id) && member.id != $mt.team.data.ownerId;
+      if (shouldRemove) {
+        deleteDoc(doc($mt.member.collection, member.id)).catch(console.error);
+      }
+      return !shouldRemove;
     });
-    $mt.selectedMembers = [];
+    selectedMembers = [];
   }
 
   function getTotalHours(logs: Log[]): number {
@@ -48,8 +45,7 @@
     let day = new Date(sunday);
     day.setDate(day.getDate() + dayIndex);
     logs.forEach((log) => {
-      let sameDay = log.start.toDate().toDateString() == day.toDateString();
-      if (sameDay) {
+      if (log.start.toDate().toDateString() == day.toDateString()) {
         hours += log.hours;
       }
     });
@@ -61,10 +57,9 @@
     let membersQuery = query($mt.member.collection, orderBy("name"));
     getDocs(membersQuery).then((querySnapshot) => {
       $mt.cachedMembers = [];
-      $mt.selectedMembers = [];
+      selectedMembers = [];
       querySnapshot.forEach((memberDoc) => {
-        let memberData: MemberData & { id: string } = { ...memberDoc.data(), id: memberDoc.id };
-        $mt.cachedMembers = [...$mt.cachedMembers, memberData];
+        $mt.cachedMembers = [...$mt.cachedMembers, { ...memberDoc.data(), id: memberDoc.id }];
       });
     });
   }
@@ -77,9 +72,7 @@
   <button on:click={refreshMembers}>Refresh</button>
   <button on:click={() => updateSunday(-7)} title="Previous week">&lt;&lt;</button>
   <button on:click={() => updateSunday(7)} title="Next week">&gt;&gt;</button>
-  <button on:click={() => updateSunday()} disabled={sunday.toString() == getThisWeekSunday().toString()}>
-    This week
-  </button>
+  <button on:click={() => updateSunday()} disabled={sunday.toString() == thisSunday().toString()}>This week</button>
 </p>
 <div class="table-wrap">
   <table>
@@ -100,9 +93,9 @@
             <label>
               <input
                 type="checkbox"
-                bind:group={$mt.selectedMembers}
+                bind:group={selectedMembers}
                 value={member.id}
-                disabled={$mt.user.document.id != $mt.team.data.ownerId}
+                disabled={$mt.user.document.id != $mt.team.data.ownerId || member.id == $mt.team.data.ownerId}
               />
               {member.name}
             </label>
@@ -118,5 +111,5 @@
   </table>
 </div>
 {#if $mt.user.document.id == $mt.team.data.ownerId}
-  <p><button class="red" on:click={removeMembers} disabled={!$mt.selectedMembers.length}>Remove</button></p>
+  <p><button class="red" on:click={removeMembers} disabled={!selectedMembers.length}>Remove</button></p>
 {/if}

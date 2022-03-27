@@ -5,8 +5,9 @@
     let goalPrompt = prompt("Enter a goal:");
     if (goalPrompt) {
       $mt.teamPrivate.updateData({
-        goal: $mt.teamPrivate.data.goal,
+        goal: parseInt(goalPrompt),
       });
+      $mt.teamPrivate = $mt.teamPrivate;
     }
   }
 
@@ -22,9 +23,9 @@
   function leaveTeam() {
     if (!confirm(`Are you sure you want to leave ${$mt.team.data.name}?`)) return;
     $mt.loaded = false;
-    $mt.user.updateData({
+    $mt.user.data = {
       teamId: "",
-    });
+    };
     $mt.team = null;
     $mt.member = null;
     $mt.teamPrivate = null;

@@ -53,11 +53,9 @@
   }
 
   $: {
-    if ($mt.member.data) {
-      hoursDisplay = getTotalHours().toFixed(1);
-      lastTimestamp = getCurrentLog().start;
-      newHoursDisplay = getTimestampDifference(Timestamp.now(), lastTimestamp);
-    }
+    hoursDisplay = getTotalHours().toFixed(1);
+    lastTimestamp = getCurrentLog().start;
+    newHoursDisplay = getTimestampDifference(Timestamp.now(), lastTimestamp);
   }
 </script>
 

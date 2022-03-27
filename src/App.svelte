@@ -1,13 +1,6 @@
 <script lang="ts">
   import { initializeApp } from "firebase/app";
-  import {
-    getAuth,
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signInWithPopup,
-    signOut,
-    User,
-  } from "firebase/auth";
+  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
   import { getFirestore } from "firebase/firestore/lite";
   import { FSDataSet, mt } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
@@ -16,32 +9,33 @@
   import MembersMenu from "./MembersMenu.svelte";
   import UnverifiedsMenu from "./UnverifiedsMenu.svelte";
 
-  let loadMessage = "Loading...";
+  let message = "Loading...";
 
-  function logInWithGoogle() {
-    signInWithPopup($mt.firebase.auth, new GoogleAuthProvider()).catch(console.error);
+  function logIn() {
+    signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
   }
 
   function logOut() {
-    if (!confirm("Are you sure?")) return;
-    signOut($mt.firebase.auth).catch(console.error);
+    confirm("Are you sure?") && signOut($mt.auth).catch(console.error);
   }
 
   async function loadTeam() {
-    $mt.team = new FSDataSet($mt.firebase.firestore, "teams", $mt.user.data.teamId);
-    await $mt.team.refreshData();
+    $mt.team = new FSDataSet($mt.firestore, "teams", $mt.user.data.teamId);
     $mt.teamPrivate = new FSDataSet($mt.team.document, "private", "data");
-    await $mt.teamPrivate.refreshData();
     $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
-    await $mt.member.refreshData();
     $mt.unverified = new FSDataSet($mt.team.document, "unverifieds", $mt.user.document.id);
-    await $mt.unverified.refreshData();
+    await Promise.all([
+      $mt.team.refreshData(),
+      $mt.teamPrivate.refreshData(),
+      $mt.member.refreshData(),
+      $mt.unverified.refreshData(),
+    ]);
   }
 
   async function loadUser(user: User) {
     $mt.loaded = false;
     if (user) {
-      $mt.user = new FSDataSet($mt.firebase.firestore, "users", user.uid);
+      $mt.user = new FSDataSet($mt.firestore, "users", user.uid);
       if (await $mt.user.refreshData()) {
         $mt.user.data.teamId && (await loadTeam());
       } else {
@@ -60,7 +54,7 @@
   }
 
   if (navigator.onLine) {
-    $mt.firebase.app = initializeApp({
+    initializeApp({
       apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
       authDomain: "meantrack-97d77.firebaseapp.com",
       projectId: "meantrack-97d77",
@@ -68,11 +62,11 @@
       messagingSenderId: "267200471704",
       appId: "1:267200471704:web:8a054875c674aebcd6a6ed",
     });
-    $mt.firebase.auth = getAuth($mt.firebase.app);
-    $mt.firebase.firestore = getFirestore($mt.firebase.app);
-    onAuthStateChanged($mt.firebase.auth, loadUser);
+    $mt.auth = getAuth();
+    $mt.firestore = getFirestore();
+    onAuthStateChanged($mt.auth, loadUser);
   } else {
-    loadMessage = "OFFLINE - MeanTrack needs an internet connection";
+    message = "OFFLINE - MeanTrack needs an internet connection";
   }
 </script>
 
@@ -97,10 +91,10 @@
       <TeamlessMenu />
     {/if}
   {:else}
-    <p><button on:click={logInWithGoogle}>Sign in with Google</button></p>
+    <p><button on:click={logIn}>Sign in with Google</button></p>
   {/if}
 {:else}
-  <p>{loadMessage}</p>
+  <p>{message}</p>
 {/if}
 
 <h2>About</h2>

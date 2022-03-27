@@ -2,14 +2,14 @@
   import { doc } from "firebase/firestore/lite";
   import { FSDataSet, mt } from "./Global.svelte";
 
-  let nameInput = $mt.firebase.auth.currentUser.displayName;
+  let nameInput = $mt.auth.currentUser.displayName;
   let joinTeamId: string;
   let createTeamName: string;
 
   async function joinTeam() {
     if (!(joinTeamId && nameInput)) return;
     $mt.loaded = false;
-    $mt.team = new FSDataSet($mt.firebase.firestore, "teams", joinTeamId);
+    $mt.team = new FSDataSet($mt.firestore, "teams", joinTeamId);
     if (await $mt.team.refreshData()) {
       $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
       await $mt.user.updateData({
@@ -36,7 +36,7 @@
   async function createTeam() {
     if (!(createTeamName && nameInput)) return;
     $mt.loaded = false;
-    $mt.team = new FSDataSet($mt.firebase.firestore, "teams");
+    $mt.team = new FSDataSet($mt.firestore, "teams");
     $mt.team.document = doc($mt.team.collection);
     $mt.team.data = {
       name: createTeamName,
