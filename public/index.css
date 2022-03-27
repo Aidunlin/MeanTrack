@@ -16,28 +16,40 @@ body {
 
 .table-wrap {
   overflow-x: auto;
+  padding: 4px 0;
 }
 
 .table-wrap table {
+  border-collapse: collapse;
   table-layout: fixed;
   width: 100%;
+}
+
+.table-wrap thead {
+  border-bottom: 1px solid;
 }
 
 .table-wrap th,
 .table-wrap td {
   overflow: hidden;
+  padding: 4px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.name-col {
+.table-wrap .name-col {
+  border-right: 1px solid;
+  text-align: left;
   width: 140px;
 }
 
-.hours-col {
-  width: 6ch;
+.table-wrap .hours-col {
+  border-right: 1px solid;
+  text-align: center;
+  width: 7ch;
 }
 
-.day-col {
+.table-wrap .day-col {
+  text-align: center;
   width: 8ch;
 }

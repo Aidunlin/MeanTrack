@@ -7,19 +7,17 @@
   function verifyMembers() {
     if (!confirm("Are you sure?")) return;
     $mt.cachedUnverifieds = $mt.cachedUnverifieds.filter((member) => {
-      let shouldVerify = !selectedUnverifiedIds.includes(member.id);
+      let shouldVerify = selectedUnverifiedIds.includes(member.id);
       if (shouldVerify) {
-        $mt.cachedMembers.push({
+        let newMember = {
           ...member,
           logs: [],
           tracking: false,
-        });
+        };
+        $mt.cachedMembers.push(newMember);
         Promise.all([
           deleteDoc(doc($mt.unverified.collection, member.id)),
-          setDoc(
-            doc($mt.member.collection, member.id),
-            $mt.cachedMembers.find((m) => m.id == member.id)
-          ),
+          setDoc(doc($mt.member.collection, member.id), newMember),
         ]).catch(console.error);
       }
       return !shouldVerify;

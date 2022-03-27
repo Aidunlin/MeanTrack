@@ -89,7 +89,7 @@
     <tbody>
       {#each $mt.cachedMembers as member (member.id)}
         <tr>
-          <td>
+          <td class="name-col">
             <label>
               <input
                 type="checkbox"
@@ -100,10 +100,10 @@
               {member.name}
             </label>
           </td>
-          <td>{getTotalHours(member.logs).toFixed(1)}</td>
+          <td class="hours-col">{getTotalHours(member.logs).toFixed(1)}</td>
           {#each [...Array(7).keys()] as dayIndex}
             {@const hours = getOneDayHours(dayIndex, member.logs)}
-            <td>{hours ? hours.toFixed(1) : ""}</td>
+            <td class="day-col">{hours ? hours.toFixed(1) : ""}</td>
           {/each}
         </tr>
       {/each}

@@ -1,6 +1,14 @@
 <script lang="ts">
   import { initializeApp } from "firebase/app";
-  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    signInAnonymously,
+    signInWithPopup,
+    signOut,
+    User,
+  } from "firebase/auth";
   import { getFirestore } from "firebase/firestore/lite";
   import { FSDataSet, mt } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
@@ -15,6 +23,10 @@
     signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
   }
 
+  function logInAnon() {
+    signInAnonymously($mt.auth).catch(console.error);
+  }
+
   function logOut() {
     confirm("Are you sure?") && signOut($mt.auth).catch(console.error);
   }
@@ -24,12 +36,13 @@
     $mt.teamPrivate = new FSDataSet($mt.team.document, "private", "data");
     $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
     $mt.unverified = new FSDataSet($mt.team.document, "unverifieds", $mt.user.document.id);
-    await Promise.all([
-      $mt.team.refreshData(),
-      $mt.teamPrivate.refreshData(),
-      $mt.member.refreshData(),
-      $mt.unverified.refreshData(),
-    ]);
+    await $mt.team.refreshData();
+    if (!(await $mt.unverified.refreshData())) {
+      await Promise.all([
+        $mt.teamPrivate.refreshData(),
+        $mt.member.refreshData(),
+      ]).catch(console.error);
+    }
   }
 
   async function loadUser(user: User) {
@@ -92,6 +105,9 @@
     {/if}
   {:else}
     <p><button on:click={logIn}>Sign in with Google</button></p>
+    {#if location.hostname.includes("localhost")}
+      <p><button on:click={logInAnon}>Sign in anonymously</button></p>
+    {/if}
   {/if}
 {:else}
   <p>{message}</p>
