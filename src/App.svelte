@@ -38,10 +38,7 @@
     $mt.unverified = new FSDataSet($mt.team.document, "unverifieds", $mt.user.document.id);
     await $mt.team.refreshData();
     if (!(await $mt.unverified.refreshData())) {
-      await Promise.all([
-        $mt.teamPrivate.refreshData(),
-        $mt.member.refreshData(),
-      ]).catch(console.error);
+      await Promise.all([$mt.teamPrivate.refreshData(), $mt.member.refreshData()]).catch(console.error);
     }
   }
 
@@ -83,8 +80,10 @@
   }
 </script>
 
-<h1>MeanTrack</h1>
-<p>A work-in-progress FRC hour tracking web app</p>
+<header>
+  <h1>MeanTrack</h1>
+  <p>A work-in-progress FRC hour tracking web app</p>
+</header>
 
 {#if $mt.loaded}
   {#if $mt.user?.data}
@@ -125,4 +124,6 @@
   <a href="https://firebase.google.com/" target="_blank">Firebase</a>
   |
   <a href="https://svelte.dev/" target="_blank">Svelte</a>
+  |
+  <a href="https://newcss.net/" target="_blank">new.css</a>
 </p>

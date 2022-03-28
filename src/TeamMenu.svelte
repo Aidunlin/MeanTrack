@@ -51,4 +51,6 @@
 {:else}
   <p>UNVERIFIED</p>
 {/if}
-<p><button on:click={leaveTeam}>Leave team</button></p>
+{#if $mt.user.document.id != $mt.team.data.ownerId}
+  <p><button on:click={leaveTeam}>Leave team</button></p>
+{/if}

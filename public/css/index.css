@@ -1,7 +1,5 @@
 * {
-  box-sizing: border-box;
   color-scheme: light dark;
-  font-family: sans-serif;
 }
 
 html {
@@ -11,45 +9,43 @@ html {
 body {
   margin: auto;
   max-width: 1000px;
-  padding: 1rem;
+}
+
+h1,
+h2,
+h3 {
+  border: none;
 }
 
 .table-wrap {
+  margin-bottom: 1rem;
   overflow-x: auto;
-  padding: 4px 0;
 }
 
 .table-wrap table {
-  border-collapse: collapse;
+  margin-bottom: 0;
   table-layout: fixed;
   width: 100%;
-}
-
-.table-wrap thead {
-  border-bottom: 1px solid;
 }
 
 .table-wrap th,
 .table-wrap td {
   overflow: hidden;
-  padding: 4px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .table-wrap .name-col {
-  border-right: 1px solid;
   text-align: left;
-  width: 140px;
+  width: 15ch;
 }
 
 .table-wrap .hours-col {
-  border-right: 1px solid;
   text-align: center;
-  width: 7ch;
+  width: 6ch;
 }
 
 .table-wrap .day-col {
   text-align: center;
-  width: 8ch;
+  width: 7ch;
 }

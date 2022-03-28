@@ -31,6 +31,7 @@
     if ($mt.member.data.tracking) {
       let currentLog = getCurrentLog();
       currentLog.hours = getTimestampDifference(Timestamp.now(), currentLog.start);
+      $mt.member.data.logs = $mt.member.data.logs;
     } else {
       $mt.member.data.logs = [
         ...$mt.member.data.logs,
