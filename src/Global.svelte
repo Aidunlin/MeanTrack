@@ -26,12 +26,9 @@
   }
 
   export interface TeamData {
+    goal: number;
     name: string;
     ownerId: string;
-  }
-
-  export interface TeamPrivateData {
-    goal: number;
   }
 
   export interface MemberData {
@@ -52,6 +49,7 @@
     public get data(): T {
       return this._data;
     }
+
     public set data(newData: T) {
       if (this.document) {
         setDoc(this.document, (this._data = newData)).catch(console.error);
@@ -70,11 +68,15 @@
     constructor(firestoreOrParent: any, collId: string, docId?: string) {
       this.collection = collection(firestoreOrParent, collId).withConverter(this.converter<T>());
       if (docId) {
-        this.document = doc(this.collection, docId);
+        if (docId == ".") {
+          this.document = doc(this.collection);
+        } else {
+          this.document = doc(this.collection, docId);
+        }
       }
     }
 
-    async refreshData() {
+    async getData() {
       if (this.document) {
         await getDoc(this.document)
           .then((snapshot) => (this._data = snapshot.data()))
@@ -85,8 +87,7 @@
 
     async updateData(data: UpdateData<T>) {
       if (this.document) {
-        Object.assign(this._data, data);
-        await updateDoc(this.document, data).catch(console.error);
+        await updateDoc(this.document, Object.assign(this._data, data)).catch(console.error);
       }
     }
   }
@@ -97,7 +98,6 @@
     firestore: Firestore;
     user: FSDataSet<UserData>;
     team: FSDataSet<TeamData>;
-    teamPrivate: FSDataSet<TeamPrivateData>;
     member: FSDataSet<MemberData>;
     unverified: FSDataSet<UnverifiedData>;
     cachedMembers: (MemberData & { id: string })[];
@@ -110,7 +110,6 @@
     firestore: null,
     user: null,
     team: null,
-    teamPrivate: null,
     member: null,
     unverified: null,
     cachedMembers: [],

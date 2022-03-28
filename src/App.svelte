@@ -33,12 +33,18 @@
 
   async function loadTeam() {
     $mt.team = new FSDataSet($mt.firestore, "teams", $mt.user.data.teamId);
-    $mt.teamPrivate = new FSDataSet($mt.team.document, "private", "data");
-    $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
-    $mt.unverified = new FSDataSet($mt.team.document, "unverifieds", $mt.user.document.id);
-    await $mt.team.refreshData();
-    if (!(await $mt.unverified.refreshData())) {
-      await Promise.all([$mt.teamPrivate.refreshData(), $mt.member.refreshData()]).catch(console.error);
+    if (await $mt.team.getData()) {
+      $mt.unverified = new FSDataSet($mt.team.document, "unverifieds", $mt.user.document.id);
+      if (!(await $mt.unverified.getData())) {
+        $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
+        if (!(await $mt.member.getData())) {
+          $mt.member = null;
+          $mt.unverified = null;
+          $mt.team = null;
+        }
+      }
+    } else {
+      $mt.team = null;
     }
   }
 
@@ -46,7 +52,7 @@
     $mt.loaded = false;
     if (user) {
       $mt.user = new FSDataSet($mt.firestore, "users", user.uid);
-      if (await $mt.user.refreshData()) {
+      if (await $mt.user.getData()) {
         $mt.user.data.teamId && (await loadTeam());
       } else {
         $mt.user.data = {
@@ -56,7 +62,6 @@
     } else {
       $mt.user = null;
       $mt.team = null;
-      $mt.teamPrivate = null;
       $mt.member = null;
       $mt.unverified = null;
     }
@@ -93,7 +98,7 @@
         <UserMenu />
       {/if}
       <TeamMenu />
-      {#if $mt.teamPrivate?.data}
+      {#if !$mt.unverified.data}
         <MembersMenu />
       {/if}
       {#if $mt.user.document.id == $mt.team.data.ownerId}

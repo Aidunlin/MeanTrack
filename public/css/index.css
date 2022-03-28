@@ -17,6 +17,22 @@ h3 {
   border: none;
 }
 
+button.red {
+  background: hsl(0, 100%, 60%);
+}
+
+button.red:hover {
+  background: hsl(0, 100%, 40%)
+}
+
+button.green {
+  background: hsl(128, 100%, 30%);
+}
+
+button.green:hover {
+  background: hsl(128, 100%, 20%);
+}
+
 .table-wrap {
   margin-bottom: 1rem;
   overflow-x: auto;
@@ -48,4 +64,19 @@ h3 {
 .table-wrap .day-col {
   text-align: center;
   width: 7ch;
+}
+
+.table-wrap .day-col:not(:last-of-type) {
+  border-right: none;
+}
+
+.table-wrap .day-col:not(:first-of-type) {
+  border-left: none;
+}
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
 }

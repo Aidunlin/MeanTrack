@@ -10,11 +10,11 @@
       let shouldVerify = selectedUnverifiedIds.includes(member.id);
       if (shouldVerify) {
         let newMember = {
-          ...member,
+          name: member.name,
           logs: [],
           tracking: false,
         };
-        $mt.cachedMembers.push(newMember);
+        $mt.cachedMembers.push({ ...newMember, id: member.id });
         Promise.all([
           deleteDoc(doc($mt.unverified.collection, member.id)),
           setDoc(doc($mt.member.collection, member.id), newMember),
@@ -43,7 +43,7 @@
 </script>
 
 <h3>Unverified</h3>
-<p><button on:click={refreshUnverifieds}>Refresh</button></p>
+<p><button on:click={refreshUnverifieds} title="Refresh">↻</button></p>
 {#each $mt.cachedUnverifieds as member (member.id)}
   <p>
     <label>

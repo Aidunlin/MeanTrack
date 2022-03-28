@@ -10,16 +10,14 @@
     if (!(joinTeamId && nameInput)) return;
     $mt.loaded = false;
     $mt.team = new FSDataSet($mt.firestore, "teams", joinTeamId);
-    if (await $mt.team.refreshData()) {
+    if (await $mt.team.getData()) {
       $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
-      await $mt.user.updateData({
+      $mt.user.data = {
         teamId: $mt.team.document.id,
-      });
+      };
       if ($mt.user.document.id == $mt.team.data.ownerId) {
-        $mt.teamPrivate = new FSDataSet($mt.team.document, "private", "data");
-        await $mt.teamPrivate.refreshData();
         $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
-        await $mt.member.refreshData();
+        await $mt.member.getData();
       } else {
         $mt.unverified.document = doc($mt.unverified.collection, $mt.user.document.id);
         $mt.unverified.data = {
@@ -36,15 +34,11 @@
   async function createTeam() {
     if (!(createTeamName && nameInput)) return;
     $mt.loaded = false;
-    $mt.team = new FSDataSet($mt.firestore, "teams");
-    $mt.team.document = doc($mt.team.collection);
+    $mt.team = new FSDataSet($mt.firestore, "teams", ".");
     $mt.team.data = {
+      goal: 0,
       name: createTeamName,
       ownerId: $mt.user.document.id,
-    };
-    $mt.teamPrivate = new FSDataSet($mt.team.document, "private", "data");
-    $mt.teamPrivate.data = {
-      goal: 0,
     };
     $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
     $mt.member.data = {
@@ -53,9 +47,9 @@
       tracking: false,
     };
     $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
-    await $mt.user.updateData({
+    $mt.user.data = {
       teamId: $mt.team.document.id,
-    });
+    };
     $mt.loaded = true;
   }
 </script>

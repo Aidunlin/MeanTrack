@@ -1,23 +1,55 @@
 <script lang="ts">
-  import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore/lite";
+  import { deleteDoc, doc, getDocs, orderBy, query, Timestamp } from "firebase/firestore/lite";
   import { Log, mt } from "./Global.svelte";
 
   let selectedMembers: string[] = [];
-  let sunday = thisSunday();
-  let weekDayNames = getWeekDays();
+  let sunday: Date;
+  let nextSunday: Date;
+  getThisWeek();
+  let weekDayNames = getWeekDays(sunday);
 
   function thisSunday() {
     let today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
   }
 
-  function updateSunday(i?: number) {
-    if (i == null) {
-      sunday = thisSunday();
-    } else {
-      sunday.setDate(sunday.getDate() + i);
-      sunday = sunday;
-    }
+  function getThisWeek() {
+    sunday = thisSunday();
+    nextSunday = new Date(sunday);
+    nextSunday.setDate(sunday.getDate() + 7);
+  }
+
+  function getPreviousWeek() {
+    nextSunday = new Date(sunday);
+    sunday.setDate(sunday.getDate() - 7);
+  }
+
+  function getNextWeek() {
+    sunday = new Date(nextSunday);
+    nextSunday.setDate(nextSunday.getDate() + 7);
+  }
+
+  function getWeekDays(sundayOfWeek: Date) {
+    return [...Array(7).keys()].map((dayIndex) => {
+      let day = new Date(sundayOfWeek.getFullYear(), sundayOfWeek.getMonth(), sundayOfWeek.getDate() + dayIndex);
+      return day.toLocaleDateString(undefined, { dateStyle: "short" });
+    });
+  }
+
+  function getHours(logs: Log[]) {
+    let hours = {
+      total: 0,
+      days: [0, 0, 0, 0, 0, 0, 0],
+    };
+    let weekStartMillis = Timestamp.fromDate(sunday).toMillis();
+    let weekEndMillis = Timestamp.fromDate(nextSunday).toMillis();
+    logs.forEach((log) => {
+      hours.total += log.hours;
+      if (log.start.toMillis() >= weekStartMillis && log.start.toMillis() < weekEndMillis) {
+        hours.days[log.start.toDate().getDay()] += log.hours;
+      }
+    });
+    return hours;
   }
 
   function removeMembers() {
@@ -30,31 +62,6 @@
       return !shouldRemove;
     });
     selectedMembers = [];
-  }
-
-  function getHours(logs: Log[]) {
-    let hours = {
-      total: 0,
-      days: [0, 0, 0, 0, 0, 0, 0],
-    };
-    let nextSunday = thisSunday();
-    nextSunday.setDate(nextSunday.getDate() + 7);
-    let weekStartMillis = thisSunday().getMilliseconds();
-    let weekEndMillis = nextSunday.getMilliseconds();
-    logs.forEach((log) => {
-      hours.total += log.hours;
-      if (log.start.toMillis() >= weekStartMillis && log.start.toMillis() < weekEndMillis) {
-        hours.days[log.start.toDate().getDay()] += log.hours;
-      }
-    });
-    return hours;
-  }
-
-  function getWeekDays() {
-    return [...Array(7).keys()].map((dayIndex) => {
-      let day = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + dayIndex);
-      return day.toLocaleDateString(undefined, { dateStyle: "short" });
-    });
   }
 
   function refreshMembers() {
@@ -74,16 +81,17 @@
   $: {
     $mt.cachedMembers = $mt.cachedMembers;
     sunday = sunday;
-    weekDayNames = getWeekDays();
+    nextSunday = nextSunday;
+    weekDayNames = getWeekDays(sunday);
   }
 </script>
 
 <h3>Members</h3>
 <p>
-  <button on:click={refreshMembers}>Refresh</button>
-  <button on:click={() => updateSunday(-7)} title="Previous week">&lt;&lt;</button>
-  <button on:click={() => updateSunday(7)} title="Next week">&gt;&gt;</button>
-  <button on:click={() => updateSunday()} disabled={sunday.toString() == thisSunday().toString()}>This week</button>
+  <button on:click={refreshMembers} title="Refresh">↻</button>
+  <button on:click={getThisWeek}>Today</button>
+  <button on:click={getPreviousWeek} title="Previous week">&lt;&lt;</button>
+  <button on:click={getNextWeek} title="Next week">&gt;&gt;</button>
 </p>
 <div class="table-wrap">
   <table>

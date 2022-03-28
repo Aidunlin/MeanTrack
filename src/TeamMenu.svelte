@@ -4,10 +4,10 @@
   function editGoal() {
     let goalPrompt = prompt("Enter a goal:");
     if (goalPrompt) {
-      $mt.teamPrivate.updateData({
+      $mt.team.updateData({
         goal: parseInt(goalPrompt),
       });
-      $mt.teamPrivate = $mt.teamPrivate;
+      $mt.team = $mt.team;
     }
   }
 
@@ -28,7 +28,6 @@
     };
     $mt.team = null;
     $mt.member = null;
-    $mt.teamPrivate = null;
     $mt.unverified = null;
     $mt.loaded = true;
   }
@@ -40,8 +39,8 @@
   {/if}
   {$mt.team.data.name}
 </h2>
-{#if $mt.teamPrivate?.data && $mt.member?.data}
-  <p>Goal: {$mt.teamPrivate.data.goal} hours</p>
+{#if !$mt.unverified?.data && $mt.member?.data}
+  <p>Goal: {$mt.team.data.goal} hours</p>
   <p>
     <button on:click={copyTeamId}>Copy id</button>
     {#if $mt.user.document.id == $mt.team.data.ownerId}
