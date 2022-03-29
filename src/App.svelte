@@ -55,9 +55,7 @@
       if (await $mt.user.getData()) {
         $mt.user.data.teamId && (await loadTeam());
       } else {
-        $mt.user.data = {
-          teamId: "",
-        };
+        $mt.user.data = { teamId: "" };
       }
     } else {
       $mt.user = null;
@@ -73,7 +71,6 @@
       apiKey: "AIzaSyAQZgF7DJ0_ty-E436BZhZ9kFMsj8D7RLk",
       authDomain: "meantrack-97d77.firebaseapp.com",
       projectId: "meantrack-97d77",
-      storageBucket: "meantrack-97d77.appspot.com",
       messagingSenderId: "267200471704",
       appId: "1:267200471704:web:8a054875c674aebcd6a6ed",
     });
@@ -90,45 +87,43 @@
   <p>A work-in-progress FRC hour tracking web app</p>
 </header>
 
-{#if $mt.loaded}
-  {#if $mt.user?.data}
-    <p><button on:click={logOut}>Sign out</button></p>
-    {#if $mt.team?.data}
-      {#if $mt.member?.data}
-        <UserMenu />
-      {/if}
-      <TeamMenu />
-      {#if !$mt.unverified.data}
-        <MembersMenu />
-      {/if}
-      {#if $mt.user.document.id == $mt.team.data.ownerId}
-        <UnverifiedsMenu />
+<main>
+  {#if $mt.loaded}
+    {#if $mt.user?.data}
+      <p><button on:click={logOut}>Sign out</button></p>
+      {#if $mt.team?.data}
+        {#if $mt.member?.data}
+          <UserMenu />
+        {/if}
+        <TeamMenu />
+        {#if !$mt.unverified.data}
+          <MembersMenu />
+        {/if}
+        {#if $mt.user.document.id == $mt.team.data.ownerId}
+          <UnverifiedsMenu />
+        {/if}
+      {:else}
+        <TeamlessMenu />
       {/if}
     {:else}
-      <TeamlessMenu />
+      <p><button on:click={logIn}>Sign in with Google</button></p>
+      {#if location.hostname.includes("localhost")}
+        <p><button on:click={logInAnon}>Sign in anonymously</button></p>
+      {/if}
     {/if}
   {:else}
-    <p><button on:click={logIn}>Sign in with Google</button></p>
-    {#if location.hostname.includes("localhost")}
-      <p><button on:click={logInAnon}>Sign in anonymously</button></p>
-    {/if}
+    <p>{message}</p>
   {/if}
-{:else}
-  <p>{message}</p>
-{/if}
+</main>
 
-<h2>About</h2>
-<p>
-  View
-  <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">Repo</a>
-  |
-  <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/" target="_blank">Doc</a>
-</p>
-<p>
-  Made with
-  <a href="https://firebase.google.com/" target="_blank">Firebase</a>
-  |
-  <a href="https://svelte.dev/" target="_blank">Svelte</a>
-  |
-  <a href="https://newcss.net/" target="_blank">new.css</a>
-</p>
+<footer>
+  <p>
+    View <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">Repo</a>
+    | <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/" target="_blank">Doc</a>
+  </p>
+  <p>
+    Made with <a href="https://firebase.google.com/" target="_blank">Firebase</a>
+    | <a href="https://svelte.dev/" target="_blank">Svelte</a>
+    | <a href="https://newcss.net/" target="_blank">new.css</a>
+  </p>
+</footer>

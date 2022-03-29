@@ -32,6 +32,7 @@
   }
 
   export interface MemberData {
+    lastAction: Timestamp;
     logs: Log[];
     name: string;
     tracking: boolean;
@@ -51,9 +52,8 @@
     }
 
     public set data(newData: T) {
-      if (this.document) {
-        setDoc(this.document, (this._data = newData)).catch(console.error);
-      }
+      if (!this.document) return;
+      setDoc(this.document, (this._data = newData)).catch(console.error);
     }
 
     private converter<T>(): FirestoreDataConverter<T> {
@@ -68,11 +68,7 @@
     constructor(firestoreOrParent: any, collId: string, docId?: string) {
       this.collection = collection(firestoreOrParent, collId).withConverter(this.converter<T>());
       if (docId) {
-        if (docId == ".") {
-          this.document = doc(this.collection);
-        } else {
-          this.document = doc(this.collection, docId);
-        }
+        this.document = docId == "." ? doc(this.collection) : doc(this.collection, docId);
       }
     }
 
@@ -86,9 +82,8 @@
     }
 
     async updateData(data: UpdateData<T>) {
-      if (this.document) {
-        await updateDoc(this.document, Object.assign(this._data, data)).catch(console.error);
-      }
+      if (!this.document) return;
+      await updateDoc(this.document, Object.assign(this._data, data)).catch(console.error);
     }
   }
 

@@ -11,9 +11,7 @@ body {
   max-width: 1000px;
 }
 
-h1,
-h2,
-h3 {
+:is(h1, h2, h3) {
   border: none;
 }
 
@@ -22,7 +20,7 @@ button.red {
 }
 
 button.red:hover {
-  background: hsl(0, 100%, 40%)
+  background: hsl(0, 100%, 40%);
 }
 
 button.green {
@@ -44,8 +42,7 @@ button.green:hover {
   width: 100%;
 }
 
-.table-wrap th,
-.table-wrap td {
+.table-wrap :is(tr, td) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

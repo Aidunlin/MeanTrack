@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { deleteDoc, doc, getDocs, orderBy, query, setDoc } from "firebase/firestore/lite";
+  import { deleteDoc, doc, getDocs, orderBy, query, setDoc, Timestamp } from "firebase/firestore/lite";
   import { mt } from "./Global.svelte";
 
   let selectedUnverifiedIds: string[] = [];
@@ -10,8 +10,9 @@
       let shouldVerify = selectedUnverifiedIds.includes(member.id);
       if (shouldVerify) {
         let newMember = {
-          name: member.name,
+          lastAction: new Timestamp(0, 0),
           logs: [],
+          name: member.name,
           tracking: false,
         };
         $mt.cachedMembers.push({ ...newMember, id: member.id });
@@ -42,16 +43,18 @@
   refreshUnverifieds();
 </script>
 
-<h3>Unverified</h3>
-<p><button on:click={refreshUnverifieds} title="Refresh">↻</button></p>
-{#each $mt.cachedUnverifieds as member (member.id)}
-  <p>
-    <label>
-      <input type="checkbox" bind:group={selectedUnverifiedIds} name="unverifieds" value={member.id} />
-      {member.name}
-    </label>
-  </p>
-{/each}
-{#if $mt.cachedUnverifieds.length}
-  <p><button class="green" on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>Verify</button></p>
-{/if}
+<details>
+  <summary>Unverified</summary>
+  <p><button on:click={refreshUnverifieds} title="Refresh">↻</button></p>
+  {#each $mt.cachedUnverifieds as member (member.id)}
+    <p>
+      <label>
+        <input type="checkbox" bind:group={selectedUnverifiedIds} name="unverifieds" value={member.id} />
+        {member.name}
+      </label>
+    </p>
+  {/each}
+  {#if $mt.cachedUnverifieds.length}
+    <p><button class="green" on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>Verify</button></p>
+  {/if}
+</details>

@@ -37,10 +37,7 @@
   }
 
   function getHours(logs: Log[]) {
-    let hours = {
-      total: 0,
-      days: [0, 0, 0, 0, 0, 0, 0],
-    };
+    let hours = { total: 0, days: [0, 0, 0, 0, 0, 0, 0] };
     let weekStartMillis = Timestamp.fromDate(sunday).toMillis();
     let weekEndMillis = Timestamp.fromDate(nextSunday).toMillis();
     logs.forEach((log) => {
@@ -66,8 +63,7 @@
 
   function refreshMembers() {
     if (!$mt.member.collection) return;
-    let membersQuery = query($mt.member.collection, orderBy("name"));
-    getDocs(membersQuery).then((querySnapshot) => {
+    getDocs(query($mt.member.collection, orderBy("name"))).then((querySnapshot) => {
       $mt.cachedMembers = [];
       selectedMembers = [];
       querySnapshot.forEach((memberDoc) => {
@@ -86,16 +82,17 @@
   }
 </script>
 
-<h3>Members</h3>
-<p>
-  <button on:click={refreshMembers} title="Refresh">↻</button>
-  <button on:click={getThisWeek}>Today</button>
-  <button on:click={getPreviousWeek} title="Previous week">&lt;&lt;</button>
-  <button on:click={getNextWeek} title="Next week">&gt;&gt;</button>
-</p>
-<div class="table-wrap">
-  <table>
-    <thead>
+<details open={$mt.user.document.id == $mt.team.data.ownerId}>
+  <summary>Members</summary>
+  <p>Week of {sunday.toLocaleDateString(undefined, { dateStyle: "medium" })}</p>
+  <p>
+    <button on:click={refreshMembers} title="Refresh">↻</button>
+    <button on:click={getThisWeek}>This week</button>
+    <button on:click={getPreviousWeek} title="Previous week">&lt;</button>
+    <button on:click={getNextWeek} title="Next week">&gt;</button>
+  </p>
+  <div class="table-wrap">
+    <table>
       <tr>
         <th class="name-col">Name</th>
         <th class="hours-col">Hours</th>
@@ -103,8 +100,6 @@
           <th class="day-col">{day}</th>
         {/each}
       </tr>
-    </thead>
-    <tbody>
       {#each $mt.cachedMembers as member (member.id)}
         {@const hoursData = getHours(member.logs)}
         <tr>
@@ -124,9 +119,9 @@
           {/each}
         </tr>
       {/each}
-    </tbody>
-  </table>
-</div>
-{#if $mt.user.document.id == $mt.team.data.ownerId}
-  <p><button class="red" on:click={removeMembers} disabled={!selectedMembers.length}>Remove</button></p>
-{/if}
+    </table>
+  </div>
+  {#if $mt.user.document.id == $mt.team.data.ownerId}
+    <p><button class="red" on:click={removeMembers} disabled={!selectedMembers.length}>Remove</button></p>
+  {/if}
+</details>

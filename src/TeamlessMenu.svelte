@@ -1,28 +1,23 @@
 <script lang="ts">
-  import { doc } from "firebase/firestore/lite";
+  import { doc, Timestamp } from "firebase/firestore/lite";
   import { FSDataSet, mt } from "./Global.svelte";
 
   let nameInput = $mt.auth.currentUser.displayName;
-  let joinTeamId: string;
-  let createTeamName: string;
+  let joinTeamId = "";
+  let createTeamName = "";
 
   async function joinTeam() {
-    if (!(joinTeamId && nameInput)) return;
     $mt.loaded = false;
     $mt.team = new FSDataSet($mt.firestore, "teams", joinTeamId);
     if (await $mt.team.getData()) {
       $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
-      $mt.user.data = {
-        teamId: $mt.team.document.id,
-      };
+      $mt.user.data = { teamId: $mt.team.document.id };
       if ($mt.user.document.id == $mt.team.data.ownerId) {
         $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
         await $mt.member.getData();
       } else {
         $mt.unverified.document = doc($mt.unverified.collection, $mt.user.document.id);
-        $mt.unverified.data = {
-          name: nameInput,
-        };
+        $mt.unverified.data = { name: nameInput };
       }
     } else {
       $mt.team = null;
@@ -32,50 +27,25 @@
   }
 
   async function createTeam() {
-    if (!(createTeamName && nameInput)) return;
     $mt.loaded = false;
     $mt.team = new FSDataSet($mt.firestore, "teams", ".");
-    $mt.team.data = {
-      goal: 0,
-      name: createTeamName,
-      ownerId: $mt.user.document.id,
-    };
+    $mt.team.data = { goal: 0, name: createTeamName, ownerId: $mt.user.document.id };
     $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
-    $mt.member.data = {
-      logs: [],
-      name: nameInput,
-      tracking: false,
-    };
+    $mt.member.data = { lastAction: new Timestamp(0, 0), logs: [], name: nameInput, tracking: false };
     $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
-    $mt.user.data = {
-      teamId: $mt.team.document.id,
-    };
+    $mt.user.data = { teamId: $mt.team.document.id };
     $mt.loaded = true;
   }
 </script>
 
-<p>
-  <label>
-    Your name
-    <br />
-    <input bind:value={nameInput} />
-  </label>
-</p>
-<h2>Join a team</h2>
-<p>
-  <label>
-    Team id
-    <br />
-    <input bind:value={joinTeamId} />
-  </label>
-</p>
-<p><button disabled={!(joinTeamId && nameInput)} on:click={joinTeam}>Join</button></p>
-<h2>Create a team</h2>
-<p>
-  <label>
-    Team name
-    <br />
-    <input bind:value={createTeamName} />
-  </label>
-</p>
-<p><button disabled={!(createTeamName && nameInput)} on:click={createTeam}>Create</button></p>
+<p><label>Your name<br /><input bind:value={nameInput} /></label></p>
+<details open>
+  <summary>Join a team</summary>
+  <p><label>Team id<br /><input bind:value={joinTeamId} /></label></p>
+  <p><button disabled={joinTeamId.length == 0 || nameInput.length == 0} on:click={joinTeam}>Join</button></p>
+</details>
+<details>
+  <summary>Create a team</summary>
+  <p><label>Team name<br /><input bind:value={createTeamName} /></label></p>
+  <p><button disabled={createTeamName.length == 0 || nameInput.length == 0} on:click={createTeam}>Create</button></p>
+</details>
