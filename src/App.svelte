@@ -10,7 +10,7 @@
     User,
   } from "firebase/auth";
   import { getFirestore } from "firebase/firestore/lite";
-  import { FSDataSet, mt } from "./Global.svelte";
+  import { FSDataSet, FSListSet, mt } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
   import TeamMenu from "./TeamMenu.svelte";
   import TeamlessMenu from "./TeamlessMenu.svelte";
@@ -28,16 +28,19 @@
   }
 
   function logOut() {
-    confirm("Are you sure?") && signOut($mt.auth).catch(console.error);
+    signOut($mt.auth).catch(console.error);
   }
 
   async function loadTeam() {
     $mt.team = new FSDataSet($mt.firestore, "teams", $mt.user.data.teamId);
     if (await $mt.team.getData()) {
-      $mt.unverified = new FSDataSet($mt.team.document, "unverifieds", $mt.user.document.id);
+      $mt.unverified = new FSListSet($mt.team.document, "unverifieds", $mt.user.document.id);
+      await $mt.unverified.getList();
       if (!(await $mt.unverified.getData())) {
-        $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
-        if (!(await $mt.member.getData())) {
+        $mt.member = new FSListSet($mt.team.document, "members", $mt.user.document.id);
+        if (await $mt.member.getData()) {
+          await $mt.member.getList();
+        } else {
           $mt.member = null;
           $mt.unverified = null;
           $mt.team = null;
@@ -53,9 +56,9 @@
     if (user) {
       $mt.user = new FSDataSet($mt.firestore, "users", user.uid);
       if (await $mt.user.getData()) {
-        $mt.user.data.teamId && (await loadTeam());
+        if ($mt.user.data.teamId) await loadTeam();
       } else {
-        $mt.user.data = { teamId: "" };
+        $mt.user = $mt.user.set({ teamId: "" });
       }
     } else {
       $mt.user = null;
@@ -119,7 +122,7 @@
 <footer>
   <p>
     View <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">Repo</a>
-    | <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c/" target="_blank">Doc</a>
+    | <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c" target="_blank">Doc</a>
   </p>
   <p>
     Made with <a href="https://firebase.google.com/" target="_blank">Firebase</a>

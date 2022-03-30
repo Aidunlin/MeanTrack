@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { deleteDoc, doc, getDocs, orderBy, query, Timestamp } from "firebase/firestore/lite";
+  import { doc, Timestamp, writeBatch } from "firebase/firestore/lite";
   import { Log, mt } from "./Global.svelte";
 
   let selectedMembers: string[] = [];
@@ -51,31 +51,22 @@
 
   function removeMembers() {
     if (!confirm("Are you sure?")) return;
-    $mt.cachedMembers = $mt.cachedMembers.filter((member) => {
+    let removeBatch = writeBatch($mt.firestore);
+    $mt.member.list = $mt.member.list.filter((member) => {
       let shouldRemove = selectedMembers.includes(member.id) && member.id != $mt.team.data.ownerId;
-      if (shouldRemove) {
-        deleteDoc(doc($mt.member.collection, member.id)).catch(console.error);
-      }
+      if (shouldRemove) removeBatch.delete(doc($mt.member.collection, member.id));
       return !shouldRemove;
     });
+    removeBatch.commit().catch(console.error);
     selectedMembers = [];
   }
 
-  function refreshMembers() {
-    if (!$mt.member.collection) return;
-    getDocs(query($mt.member.collection, orderBy("name"))).then((querySnapshot) => {
-      $mt.cachedMembers = [];
-      selectedMembers = [];
-      querySnapshot.forEach((memberDoc) => {
-        $mt.cachedMembers = [...$mt.cachedMembers, { ...memberDoc.data(), id: memberDoc.id }];
-      });
-    });
+  async function refreshMembers() {
+    $mt.member.list = await $mt.member.getList();
   }
 
-  refreshMembers();
-
   $: {
-    $mt.cachedMembers = $mt.cachedMembers;
+    $mt.member = $mt.member;
     sunday = sunday;
     nextSunday = nextSunday;
     weekDayNames = getWeekDays(sunday);
@@ -100,7 +91,7 @@
           <th class="day-col">{day}</th>
         {/each}
       </tr>
-      {#each $mt.cachedMembers as member (member.id)}
+      {#each $mt.member.list as member (member.id)}
         {@const hoursData = getHours(member.logs)}
         <tr>
           <td class="name-col">

@@ -2,6 +2,10 @@
   import { Timestamp } from "firebase/firestore/lite";
   import { mt } from "./Global.svelte";
 
+  let totalHours: number;
+  let newHours: number;
+  let trackingDisplay: string;
+
   function getTimestampDifference(a: Timestamp, b: Timestamp) {
     return Math.abs(a.toMillis() - b.toMillis()) / 1000 / 3600;
   }
@@ -13,32 +17,35 @@
         start: $mt.member.data.lastAction,
       });
     }
-    $mt.member.updateData({
+    $mt.member = $mt.member.update({
       lastAction: Timestamp.now(),
       logs: $mt.member.data.logs,
       tracking: !$mt.member.data.tracking,
     });
-    $mt.member = $mt.member;
   }
 
-  function displayTotalHours() {
-    let totalHours = 0;
-    $mt.member.data.logs.forEach((log) => (totalHours += log.hours));
-    return totalHours.toFixed(1);
+  function getTotalHours() {
+    let hours = 0;
+    $mt.member.data.logs.forEach((log) => (hours += log.hours));
+    return hours;
   }
 
-  function displayLastAction() {
-    return $mt.member.data.lastAction.toDate().toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+  $: {
+    totalHours = getTotalHours();
+    newHours = getTimestampDifference(Timestamp.now(), $mt.member.data.lastAction);
+    trackingDisplay = $mt.member.data.tracking ? "Stop" : "Start";
   }
 </script>
 
 <details open>
   <summary>{$mt.member.data.name}</summary>
   {#if $mt.member.data.logs}
-    <p>Hours: {displayTotalHours()}</p>
+    <p>
+      Hours: {totalHours.toFixed(1)}
+      {#if $mt.member.data.tracking}
+        + {newHours.toFixed(1)}
+      {/if}
+    </p>
   {/if}
-  {#if $mt.member.data.tracking && $mt.member.data.lastAction}
-    <p>Started: {displayLastAction()}</p>
-  {/if}
-  <p><button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button></p>  
+  <p><button on:click={toggleTracking}>{trackingDisplay} tracking</button></p>
 </details>

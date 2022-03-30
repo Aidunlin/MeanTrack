@@ -1,43 +1,34 @@
 <script lang="ts">
-  import { deleteDoc, doc, getDocs, orderBy, query, setDoc, Timestamp } from "firebase/firestore/lite";
-  import { mt } from "./Global.svelte";
+  import { doc, Timestamp, writeBatch } from "firebase/firestore/lite";
+  import { MemberData, mt } from "./Global.svelte";
 
   let selectedUnverifiedIds: string[] = [];
 
   function verifyMembers() {
     if (!confirm("Are you sure?")) return;
-    $mt.cachedUnverifieds = $mt.cachedUnverifieds.filter((member) => {
+    let verifyBatch = writeBatch($mt.firestore);
+    $mt.unverified.list = $mt.unverified.list.filter((member) => {
       let shouldVerify = selectedUnverifiedIds.includes(member.id);
       if (shouldVerify) {
-        let newMember = {
-          lastAction: new Timestamp(0, 0),
+        let newMember: MemberData = {
+          lastAction: Timestamp.now(),
           logs: [],
           name: member.name,
           tracking: false,
         };
-        $mt.cachedMembers.push({ ...newMember, id: member.id });
-        Promise.all([
-          deleteDoc(doc($mt.unverified.collection, member.id)),
-          setDoc(doc($mt.member.collection, member.id), newMember),
-        ]).catch(console.error);
+        $mt.member.list.push({ ...newMember, id: member.id });
+        verifyBatch.delete(doc($mt.unverified.collection, member.id));
+        verifyBatch.set(doc($mt.member.collection, member.id), newMember);
       }
       return !shouldVerify;
     });
-    $mt.cachedMembers = $mt.cachedMembers.sort((a, b) => (a.name > b.name ? 1 : -1));
+    verifyBatch.commit().catch(console.error);
+    $mt.member.list = $mt.member.list.sort((a, b) => (a.name > b.name ? 1 : -1));
     selectedUnverifiedIds = [];
   }
 
-  function refreshUnverifieds() {
-    if (!$mt.unverified.collection) return;
-    getDocs(query($mt.unverified.collection, orderBy("name"))).then((querySnapshot) => {
-      $mt.cachedUnverifieds = [];
-      selectedUnverifiedIds = [];
-      querySnapshot.forEach((unverifiedDoc) => {
-        if (!$mt.cachedMembers.some((member) => member.id == unverifiedDoc.id)) {
-          $mt.cachedUnverifieds = [...$mt.cachedUnverifieds, { ...unverifiedDoc.data(), id: unverifiedDoc.id }];
-        }
-      });
-    });
+  async function refreshUnverifieds() {
+    $mt.unverified.list = await $mt.unverified.getList();
   }
 
   refreshUnverifieds();
@@ -46,15 +37,15 @@
 <details>
   <summary>Unverified</summary>
   <p><button on:click={refreshUnverifieds} title="Refresh">↻</button></p>
-  {#each $mt.cachedUnverifieds as member (member.id)}
+  {#each $mt.unverified.list as unverified (unverified.id)}
     <p>
       <label>
-        <input type="checkbox" bind:group={selectedUnverifiedIds} name="unverifieds" value={member.id} />
-        {member.name}
+        <input type="checkbox" bind:group={selectedUnverifiedIds} name="unverifieds" value={unverified.id} />
+        {unverified.name}
       </label>
     </p>
   {/each}
-  {#if $mt.cachedUnverifieds.length}
+  {#if $mt.unverified.list.length}
     <p><button class="green" on:click={verifyMembers} disabled={!selectedUnverifiedIds.length}>Verify</button></p>
   {/if}
 </details>

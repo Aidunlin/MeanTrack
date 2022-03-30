@@ -4,8 +4,7 @@
   function editGoal() {
     let goalPrompt = prompt("Enter a goal:");
     if (!goalPrompt) return;
-    $mt.team.updateData({ goal: parseInt(goalPrompt) });
-    $mt.team = $mt.team;
+    $mt.team = $mt.team.update({ goal: parseInt(goalPrompt) });
   }
 
   function copyTeamId() {
@@ -20,7 +19,7 @@
   function leaveTeam() {
     if (!confirm(`Are you sure you want to leave ${$mt.team.data.name}?`)) return;
     $mt.loaded = false;
-    $mt.user.data = { teamId: "" };
+    $mt.user = $mt.user.set({ teamId: "" });
     $mt.team = null;
     $mt.member = null;
     $mt.unverified = null;

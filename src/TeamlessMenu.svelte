@@ -1,6 +1,6 @@
 <script lang="ts">
   import { doc, Timestamp } from "firebase/firestore/lite";
-  import { FSDataSet, mt } from "./Global.svelte";
+  import { FSDataSet, FSListSet, mt } from "./Global.svelte";
 
   let nameInput = $mt.auth.currentUser.displayName;
   let joinTeamId = "";
@@ -10,14 +10,14 @@
     $mt.loaded = false;
     $mt.team = new FSDataSet($mt.firestore, "teams", joinTeamId);
     if (await $mt.team.getData()) {
-      $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
-      $mt.user.data = { teamId: $mt.team.document.id };
+      $mt.unverified = new FSListSet($mt.team.document, "unverifieds");
+      $mt.user = $mt.user.set({ teamId: $mt.team.document.id });
       if ($mt.user.document.id == $mt.team.data.ownerId) {
-        $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
+        $mt.member = new FSListSet($mt.team.document, "members", $mt.user.document.id);
         await $mt.member.getData();
       } else {
         $mt.unverified.document = doc($mt.unverified.collection, $mt.user.document.id);
-        $mt.unverified.data = { name: nameInput };
+        $mt.unverified = $mt.unverified.set({ name: nameInput });
       }
     } else {
       $mt.team = null;
@@ -29,11 +29,11 @@
   async function createTeam() {
     $mt.loaded = false;
     $mt.team = new FSDataSet($mt.firestore, "teams", ".");
-    $mt.team.data = { goal: 0, name: createTeamName, ownerId: $mt.user.document.id };
-    $mt.member = new FSDataSet($mt.team.document, "members", $mt.user.document.id);
-    $mt.member.data = { lastAction: new Timestamp(0, 0), logs: [], name: nameInput, tracking: false };
-    $mt.unverified = new FSDataSet($mt.team.document, "unverifieds");
-    $mt.user.data = { teamId: $mt.team.document.id };
+    $mt.team = $mt.team.set({ goal: 0, name: createTeamName, ownerId: $mt.user.document.id });
+    $mt.member = new FSListSet($mt.team.document, "members", $mt.user.document.id);
+    $mt.member = $mt.member.set({ lastAction: Timestamp.now(), logs: [], name: nameInput, tracking: false });
+    $mt.unverified = new FSListSet($mt.team.document, "unverifieds");
+    $mt.user = $mt.user.set({ teamId: $mt.team.document.id });
     $mt.loaded = true;
   }
 </script>
