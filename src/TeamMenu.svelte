@@ -42,7 +42,7 @@
     {#if $mt.unverified?.data}
       <p>You are unverified</p>
     {:else}
-      <p>Something weird happened...</p>
+      <p>You've been removed from {$mt.team.data.name}</p>
     {/if}
     <p><button on:click={leaveTeam}>Leave</button></p>
   {/if}

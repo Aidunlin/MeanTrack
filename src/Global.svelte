@@ -109,9 +109,15 @@
       }
       return this.list;
     }
+    
+    updateById(id: string, data: UpdateData<T>) {
+      Object.assign(this.list.find(i => i.id == id), data);
+      updateDoc(doc(this.collection, id), data).catch(console.error);
+      return this;
+    }
 
     async getData(id?: string) {
-      let searchId = id ? id : this.id;
+      let searchId = id ?? this.id;
       return this.list?.find((d) => d.id == searchId) ?? (await super.getData());
     }
   }

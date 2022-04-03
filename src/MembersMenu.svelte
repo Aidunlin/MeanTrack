@@ -1,6 +1,6 @@
 <script lang="ts">
   import { doc, Timestamp, writeBatch } from "firebase/firestore/lite";
-  import { Log, mt } from "./Global.svelte";
+  import { Log, MemberData, mt } from "./Global.svelte";
 
   let selectedMembers: string[] = [];
   let sunday: Date;
@@ -65,6 +65,21 @@
     $mt.member.list = await $mt.member.getList();
   }
 
+  async function adjustHours(member: MemberData & { id: string }, prevHours: number, dayIndex: number) {
+    if ($mt.user.id != $mt.team.data.ownerId && $mt.user.id != member.id) return;
+    let day = new Date(sunday);
+    day.setDate(day.getDate() + dayIndex);
+    let dayDisplay = day.toLocaleString(undefined, { dateStyle: "medium" });
+    let hoursPrompt = prompt(`Edit hours for:\n${member.name} - ${dayDisplay}`, `${prevHours ? prevHours : ""}`);
+    let newHours = parseInt(hoursPrompt);
+    if (!hoursPrompt || isNaN(newHours) || !isFinite(newHours)) return;
+    member.logs.push({
+      hours: newHours - prevHours,
+      start: Timestamp.fromDate(day),
+    });
+    $mt.member = $mt.member.updateById(member.id, { logs: member.logs });
+  }
+
   $: {
     $mt.member = $mt.member;
     sunday = sunday;
@@ -106,8 +121,16 @@
               {/if}
             </td>
             <td class="hours-col">{hoursData.total.toFixed(1)}</td>
-            {#each hoursData.days as hours}
-              <td class="day-col">{hours ? hours.toFixed(1) : ""}</td>
+            {#each hoursData.days as hours, i}
+              <td
+                class="day-col"
+                class:editable={$mt.user.id == $mt.team.data.ownerId || $mt.user.id == member.id}
+                on:click={() => adjustHours(member, hours, i)}
+              >
+                {#if hours}
+                  {hours.toFixed(1)}
+                {/if}
+              </td>
             {/each}
           </tr>
         {/each}
