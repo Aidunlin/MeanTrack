@@ -10,7 +10,7 @@
     User,
   } from "firebase/auth";
   import { getFirestore } from "firebase/firestore/lite";
-  import { FSDataSet, FSListSet, mt } from "./Global.svelte";
+  import { ListFS, mt, SingleFS } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
   import TeamMenu from "./TeamMenu.svelte";
   import TeamlessMenu from "./TeamlessMenu.svelte";
@@ -32,19 +32,15 @@
   }
 
   async function loadTeam() {
-    $mt.team = new FSDataSet($mt.firestore, "teams", $mt.user.data.teamId);
+    $mt.team = new SingleFS($mt.firestore, "teams", $mt.user.data.teamId);
     if (await $mt.team.getData()) {
-      $mt.unverified = new FSListSet($mt.team.document, "unverifieds", $mt.user.document.id);
+      $mt.unverified = new ListFS($mt.team.document, "unverifieds", $mt.user.id);
       await $mt.unverified.getList();
-      if (!(await $mt.unverified.getData())) {
-        $mt.member = new FSListSet($mt.team.document, "members", $mt.user.document.id);
-        if (await $mt.member.getData()) {
-          await $mt.member.getList();
-        } else {
-          $mt.member = null;
-          $mt.unverified = null;
-          $mt.team = null;
-        }
+      $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
+      if (!(await $mt.member.getList())) {
+        $mt.member = null;
+        $mt.unverified = null;
+        $mt.team = null;
       }
     } else {
       $mt.team = null;
@@ -54,7 +50,7 @@
   async function loadUser(user: User) {
     $mt.loaded = false;
     if (user) {
-      $mt.user = new FSDataSet($mt.firestore, "users", user.uid);
+      $mt.user = new SingleFS($mt.firestore, "users", user.uid);
       if (await $mt.user.getData()) {
         if ($mt.user.data.teamId) await loadTeam();
       } else {
@@ -93,25 +89,25 @@
 <main>
   {#if $mt.loaded}
     {#if $mt.user?.data}
-      <p><button on:click={logOut}>Sign out</button></p>
+      <p><button on:click={logOut}>Log out</button></p>
       {#if $mt.team?.data}
         {#if $mt.member?.data}
           <UserMenu />
         {/if}
         <TeamMenu />
-        {#if !$mt.unverified.data}
+        {#if $mt.member?.data}
           <MembersMenu />
         {/if}
-        {#if $mt.user.document.id == $mt.team.data.ownerId}
+        {#if $mt.user.id == $mt.team.data.ownerId}
           <UnverifiedsMenu />
         {/if}
       {:else}
         <TeamlessMenu />
       {/if}
     {:else}
-      <p><button on:click={logIn}>Sign in with Google</button></p>
+      <p><button on:click={logIn}>Log in with Google</button></p>
       {#if location.hostname.includes("localhost")}
-        <p><button on:click={logInAnon}>Sign in anonymously</button></p>
+        <p><button on:click={logInAnon}>Log in anonymously</button></p>
       {/if}
     {/if}
   {:else}

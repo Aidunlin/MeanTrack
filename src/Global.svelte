@@ -5,7 +5,6 @@
     collection,
     CollectionReference,
     doc,
-    DocumentData,
     DocumentReference,
     Firestore,
     getDoc,
@@ -45,16 +44,20 @@
     name: string;
   }
 
-  export class FSDataSet<T> {
+  export class SingleFS<T> {
     collection: CollectionReference<T>;
     document: DocumentReference<T>;
     data: T;
+
+    get id() {
+      return this.document.id;
+    }
 
     constructor(firestore: Firestore, collId: string, docId?: string);
     constructor(parent: DocumentReference, collId: string, docId?: string);
     constructor(firestoreOrParent: any, collId: string, docId?: string) {
       this.collection = collection(firestoreOrParent, collId).withConverter({
-        toFirestore: (data: T) => data as DocumentData,
+        toFirestore: (data: T) => data,
         fromFirestore: (snapshot) => snapshot.data() as T,
       });
       if (docId) this.document = docId == "." ? doc(this.collection) : doc(this.collection, docId);
@@ -82,7 +85,7 @@
     }
   }
 
-  export class FSListSet<T> extends FSDataSet<T> {
+  export class ListFS<T> extends SingleFS<T> {
     query: Query<T>;
     list: (T & { id: string })[] = [];
 
@@ -94,11 +97,22 @@
     }
 
     async getList() {
-      await getDocs(this.query).then((snapshot) => {
+      try {
+        await getDocs(this.query).then((snapshot) => {
+          this.list = [];
+          snapshot.forEach((doc) => this.list.push({ ...doc.data(), id: doc.id }));
+          this.data = this.list.find((d) => d.id == this.id) as Extract<T & { id: string }, T>;
+        });
+      } catch (e) {
         this.list = [];
-        snapshot.forEach((doc) => this.list.push({ ...doc.data(), id: doc.id }));
-      });
+        console.error(e);
+      }
       return this.list;
+    }
+
+    async getData(id?: string) {
+      let searchId = id ? id : this.id;
+      return this.list?.find((d) => d.id == searchId) ?? (await super.getData());
     }
   }
 
@@ -106,10 +120,10 @@
     loaded: boolean;
     auth: Auth;
     firestore: Firestore;
-    user: FSDataSet<UserData>;
-    team: FSDataSet<TeamData>;
-    member: FSListSet<MemberData>;
-    unverified: FSListSet<UnverifiedData>;
+    user: SingleFS<UserData>;
+    team: SingleFS<TeamData>;
+    member: ListFS<MemberData>;
+    unverified: ListFS<UnverifiedData>;
   }
 
   export const mt = writable<MT>({

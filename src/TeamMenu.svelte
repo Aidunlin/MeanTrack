@@ -29,17 +29,21 @@
 
 <details open>
   <summary>{$mt.team.data.name}</summary>
-  {#if !$mt.unverified?.data && $mt.member?.data}
+  {#if $mt.member?.data}
     <p>Goal: {$mt.team.data.goal} hours</p>
     <p>
       <button on:click={copyTeamId}>Copy id</button>
-      {#if $mt.user.document.id == $mt.team.data.ownerId}
+      {#if $mt.user.id == $mt.team.data.ownerId}
         <button on:click={editGoal}>Edit goal</button>
       {/if}
       <button on:click={leaveTeam}>Leave</button>
     </p>
   {:else}
-    <p>You are unverified</p>
+    {#if $mt.unverified?.data}
+      <p>You are unverified</p>
+    {:else}
+      <p>Something weird happened...</p>
+    {/if}
     <p><button on:click={leaveTeam}>Leave</button></p>
   {/if}
 </details>

@@ -49,17 +49,17 @@ button.green:hover {
 
 .table-wrap .name-col {
   text-align: left;
-  width: 15ch;
+  width: 12ch;
 }
 
 .table-wrap .hours-col {
   text-align: center;
-  width: 6ch;
+  width: 5ch;
 }
 
 .table-wrap .day-col {
   text-align: center;
-  width: 7ch;
+  width: 4ch;
 }
 
 .table-wrap .day-col:not(:last-of-type) {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { doc, Timestamp, writeBatch } from "firebase/firestore/lite";
-  import { MemberData, mt } from "./Global.svelte";
+  import { mt } from "./Global.svelte";
 
   let selectedUnverifiedIds: string[] = [];
 
@@ -10,7 +10,7 @@
     $mt.unverified.list = $mt.unverified.list.filter((member) => {
       let shouldVerify = selectedUnverifiedIds.includes(member.id);
       if (shouldVerify) {
-        let newMember: MemberData = {
+        let newMember = {
           lastAction: Timestamp.now(),
           logs: [],
           name: member.name,
@@ -30,8 +30,6 @@
   async function refreshUnverifieds() {
     $mt.unverified.list = await $mt.unverified.getList();
   }
-
-  refreshUnverifieds();
 </script>
 
 <details>

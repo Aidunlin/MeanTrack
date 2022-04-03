@@ -32,7 +32,7 @@
   function getWeekDays(sundayOfWeek: Date) {
     return [...Array(7).keys()].map((dayIndex) => {
       let day = new Date(sundayOfWeek.getFullYear(), sundayOfWeek.getMonth(), sundayOfWeek.getDate() + dayIndex);
-      return day.toLocaleDateString(undefined, { dateStyle: "short" });
+      return day.toLocaleDateString(undefined, { month: "numeric", day: "numeric" });
     });
   }
 
@@ -73,7 +73,7 @@
   }
 </script>
 
-<details open={$mt.user.document.id == $mt.team.data.ownerId}>
+<details open={$mt.user.id == $mt.team.data.ownerId}>
   <summary>Members</summary>
   <p>Week of {sunday.toLocaleDateString(undefined, { dateStyle: "medium" })}</p>
   <p>
@@ -91,28 +91,30 @@
           <th class="day-col">{day}</th>
         {/each}
       </tr>
-      {#each $mt.member.list as member (member.id)}
-        {@const hoursData = getHours(member.logs)}
-        <tr>
-          <td class="name-col">
-            {#if $mt.user.document.id == $mt.team.data.ownerId && member.id != $mt.team.data.ownerId}
-              <label>
-                <input type="checkbox" bind:group={selectedMembers} value={member.id} />
+      {#if $mt.member?.list}
+        {#each $mt.member.list as member (member.id)}
+          {@const hoursData = getHours(member.logs)}
+          <tr>
+            <td class="name-col">
+              {#if $mt.user.id == $mt.team.data.ownerId && member.id != $mt.team.data.ownerId}
+                <label>
+                  <input type="checkbox" bind:group={selectedMembers} value={member.id} />
+                  {member.name}
+                </label>
+              {:else}
                 {member.name}
-              </label>
-            {:else}
-              {member.name}
-            {/if}
-          </td>
-          <td class="hours-col">{hoursData.total.toFixed(1)}</td>
-          {#each hoursData.days as hours}
-            <td class="day-col">{hours ? hours.toFixed(1) : ""}</td>
-          {/each}
-        </tr>
-      {/each}
+              {/if}
+            </td>
+            <td class="hours-col">{hoursData.total.toFixed(1)}</td>
+            {#each hoursData.days as hours}
+              <td class="day-col">{hours ? hours.toFixed(1) : ""}</td>
+            {/each}
+          </tr>
+        {/each}
+      {/if}
     </table>
   </div>
-  {#if $mt.user.document.id == $mt.team.data.ownerId}
+  {#if $mt.user.id == $mt.team.data.ownerId}
     <p><button class="red" on:click={removeMembers} disabled={!selectedMembers.length}>Remove</button></p>
   {/if}
 </details>
