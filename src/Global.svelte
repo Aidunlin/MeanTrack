@@ -18,6 +18,33 @@
     updateDoc,
   } from "firebase/firestore/lite";
 
+  export class Week {
+    sunday: Date;
+
+    constructor(day = new Date()) {
+      this.sunday = new Date(day.getFullYear(), day.getMonth(), day.getDate() - day.getDay());
+    }
+
+    day(index: number) {
+      let newDay = new Date(this.sunday);
+      newDay.setDate(newDay.getDate() + index);
+      return newDay;
+    }
+
+    get previous() {
+      return new Week(this.day(-7));
+    }
+
+    get next() {
+      return new Week(this.day(7));
+    }
+
+    contains(day: Date) {
+      let dayMillis = day.getTime();
+      return dayMillis >= this.sunday.getTime() && dayMillis < this.next.sunday.getTime();
+    }
+  }
+
   export interface Log {
     hours: number;
     start: Timestamp;
@@ -99,26 +126,26 @@
     async getList() {
       try {
         await getDocs(this.query).then((snapshot) => {
-          this.list = [];
-          snapshot.forEach((doc) => this.list.push({ ...doc.data(), id: doc.id }));
+          this.list = snapshot.docs.map(doc => {return {...doc.data(), id: doc.id}});
           this.data = this.list.find((d) => d.id == this.id) as Extract<T & { id: string }, T>;
         });
       } catch (e) {
         this.list = [];
+        this.data = null;
         console.error(e);
       }
       return this.list;
-    }
-    
-    updateById(id: string, data: UpdateData<T>) {
-      Object.assign(this.list.find(i => i.id == id), data);
-      updateDoc(doc(this.collection, id), data).catch(console.error);
-      return this;
     }
 
     async getData(id?: string) {
       let searchId = id ?? this.id;
       return this.list?.find((d) => d.id == searchId) ?? (await super.getData());
+    }
+    
+    update(data: UpdateData<T>, id?: string) {
+      Object.assign(this.list.find(i => i.id == id), data);
+      updateDoc(doc(this.collection, id), data).catch(console.error);
+      return this;
     }
   }
 

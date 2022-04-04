@@ -6,14 +6,12 @@
   let newHours: number;
   let trackingDisplay: string;
 
-  function getTimestampDifference(a: Timestamp, b: Timestamp) {
-    return Math.abs(a.toMillis() - b.toMillis()) / 1000 / 3600;
-  }
+  const hoursBetween = (a: Timestamp, b: Timestamp) => Math.abs(a.toMillis() - b.toMillis()) / 360000;
 
   function toggleTracking() {
     if ($mt.member.data.tracking) {
       $mt.member.data.logs.push({
-        hours: getTimestampDifference(Timestamp.now(), $mt.member.data.lastAction),
+        hours: hoursBetween(Timestamp.now(), $mt.member.data.lastAction),
         start: $mt.member.data.lastAction,
       });
     }
@@ -24,15 +22,15 @@
     });
   }
 
-  function getTotalHours() {
+  function getHours() {
     let hours = 0;
     $mt.member.data.logs.forEach((log) => (hours += log.hours));
     return hours;
   }
 
   $: {
-    totalHours = getTotalHours();
-    newHours = getTimestampDifference(Timestamp.now(), $mt.member.data.lastAction);
+    totalHours = getHours();
+    newHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
     trackingDisplay = $mt.member.data.tracking ? "Stop" : "Start";
   }
 </script>

@@ -19,17 +19,9 @@
 
   let message = "Loading...";
 
-  function logIn() {
-    signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
-  }
-
-  function logInAnon() {
-    signInAnonymously($mt.auth).catch(console.error);
-  }
-
-  function logOut() {
-    signOut($mt.auth).catch(console.error);
-  }
+  const logIn = () => signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
+  const logInAnon = () => signInAnonymously($mt.auth).catch(console.error);
+  const logOut = () => signOut($mt.auth).catch(console.error);
 
   async function loadTeam() {
     $mt.team = new SingleFS($mt.firestore, "teams", $mt.user.data.teamId);

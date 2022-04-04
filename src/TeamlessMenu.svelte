@@ -3,12 +3,12 @@
   import { ListFS, mt, SingleFS } from "./Global.svelte";
 
   let nameInput = $mt.auth.currentUser.displayName;
-  let joinTeamId = "";
-  let createTeamName = "";
+  let teamIdInput = "";
+  let teamNameInput = "";
 
-  async function joinTeam() {
+  async function join() {
     $mt.loaded = false;
-    $mt.team = new SingleFS($mt.firestore, "teams", joinTeamId);
+    $mt.team = new SingleFS($mt.firestore, "teams", teamIdInput);
     if (await $mt.team.getData()) {
       $mt.unverified = new ListFS($mt.team.document, "unverifieds");
       $mt.user = $mt.user.set({ teamId: $mt.team.id });
@@ -26,10 +26,10 @@
     $mt.loaded = true;
   }
 
-  async function createTeam() {
+  async function create() {
     $mt.loaded = false;
     $mt.team = new SingleFS($mt.firestore, "teams", ".");
-    $mt.team = $mt.team.set({ goal: 0, name: createTeamName, ownerId: $mt.user.id });
+    $mt.team = $mt.team.set({ goal: 0, name: teamNameInput, ownerId: $mt.user.id });
     $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
     $mt.member = $mt.member.set({ lastAction: Timestamp.now(), logs: [], name: nameInput, tracking: false });
     $mt.unverified = new ListFS($mt.team.document, "unverifieds");
@@ -41,11 +41,11 @@
 <p><label>Your name<br /><input bind:value={nameInput} /></label></p>
 <details open>
   <summary>Join a team</summary>
-  <p><label>Team id<br /><input bind:value={joinTeamId} /></label></p>
-  <p><button disabled={joinTeamId.length == 0 || nameInput.length == 0} on:click={joinTeam}>Join</button></p>
+  <p><label>Team id<br /><input bind:value={teamIdInput} /></label></p>
+  <p><button disabled={teamIdInput.length == 0 || nameInput.length == 0} on:click={join}>Join</button></p>
 </details>
 <details>
   <summary>Create a team</summary>
-  <p><label>Team name<br /><input bind:value={createTeamName} /></label></p>
-  <p><button disabled={createTeamName.length == 0 || nameInput.length == 0} on:click={createTeam}>Create</button></p>
+  <p><label>Team name<br /><input bind:value={teamNameInput} /></label></p>
+  <p><button disabled={teamNameInput.length == 0 || nameInput.length == 0} on:click={create}>Create</button></p>
 </details>

@@ -7,7 +7,7 @@
     $mt.team = $mt.team.update({ goal: parseInt(goalPrompt) });
   }
 
-  function copyTeamId() {
+  function copyId() {
     if ("clipboard" in navigator) {
       navigator.clipboard.writeText($mt.user.data.teamId);
       alert("Copied!");
@@ -16,7 +16,7 @@
     }
   }
 
-  function leaveTeam() {
+  function leave() {
     if (!confirm(`Are you sure you want to leave ${$mt.team.data.name}?`)) return;
     $mt.loaded = false;
     $mt.user = $mt.user.set({ teamId: "" });
@@ -32,11 +32,11 @@
   {#if $mt.member?.data}
     <p>Goal: {$mt.team.data.goal} hours</p>
     <p>
-      <button on:click={copyTeamId}>Copy id</button>
+      <button on:click={copyId}>Copy id</button>
       {#if $mt.user.id == $mt.team.data.ownerId}
         <button on:click={editGoal}>Edit goal</button>
       {/if}
-      <button on:click={leaveTeam}>Leave</button>
+      <button on:click={leave}>Leave</button>
     </p>
   {:else}
     {#if $mt.unverified?.data}
@@ -44,6 +44,6 @@
     {:else}
       <p>You've been removed from {$mt.team.data.name}</p>
     {/if}
-    <p><button on:click={leaveTeam}>Leave</button></p>
+    <p><button on:click={leave}>Leave</button></p>
   {/if}
 </details>
