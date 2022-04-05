@@ -8,12 +8,8 @@
   }
 
   function copyId() {
-    if ("clipboard" in navigator) {
-      navigator.clipboard.writeText($mt.user.data.teamId);
-      alert("Copied!");
-    } else {
-      prompt("Copy the id:", $mt.user.data.teamId);
-    }
+    if ("clipboard" in navigator) navigator.clipboard.writeText($mt.user.data.teamId);
+    else prompt("Copy the id:", $mt.user.data.teamId);
   }
 
   function leave() {

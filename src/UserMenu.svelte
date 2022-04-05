@@ -1,19 +1,24 @@
 <script lang="ts">
   import { Timestamp } from "firebase/firestore/lite";
-  import { mt } from "./Global.svelte";
+  import { hoursBetween, mt, sameDay } from "./Global.svelte";
 
   let totalHours: number;
-  let newHours: number;
+  let tempHours: number;
   let trackingDisplay: string;
-
-  const hoursBetween = (a: Timestamp, b: Timestamp) => Math.abs(a.toMillis() - b.toMillis()) / 360000;
 
   function toggleTracking() {
     if ($mt.member.data.tracking) {
-      $mt.member.data.logs.push({
-        hours: hoursBetween(Timestamp.now(), $mt.member.data.lastAction),
-        start: $mt.member.data.lastAction,
+      let existingLog = $mt.member.data.logs.find((log) => {
+        return sameDay(log.start.toDate(), $mt.member.data.lastAction.toDate());
       });
+      let newHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
+      if (existingLog) existingLog.hours += newHours;
+      else {
+        $mt.member.data.logs.push({
+          hours: newHours,
+          start: $mt.member.data.lastAction,
+        });
+      }
     }
     $mt.member = $mt.member.update({
       lastAction: Timestamp.now(),
@@ -30,7 +35,7 @@
 
   $: {
     totalHours = getHours();
-    newHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
+    tempHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
     trackingDisplay = $mt.member.data.tracking ? "Stop" : "Start";
   }
 </script>
@@ -41,7 +46,7 @@
     <p>
       Hours: {totalHours.toFixed(1)}
       {#if $mt.member.data.tracking}
-        + {newHours.toFixed(1)}
+        + {tempHours.toFixed(1)}
       {/if}
     </p>
   {/if}

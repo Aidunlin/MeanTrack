@@ -18,6 +18,17 @@
     updateDoc,
   } from "firebase/firestore/lite";
 
+  export function hoursBetween(a: Timestamp, b: Timestamp) {
+    return Math.abs(a.toMillis() - b.toMillis()) / 360000;
+  }
+
+  export function sameDay(a: Date, b: Date) {
+    let sameYear = a.getFullYear() == b.getFullYear();
+    let sameMonth = a.getMonth() == b.getMonth();
+    let sameDate = a.getDate() == b.getDate();
+    return sameYear && sameMonth && sameDate;
+  }
+
   export class Week {
     sunday: Date;
 
@@ -126,7 +137,9 @@
     async getList() {
       try {
         await getDocs(this.query).then((snapshot) => {
-          this.list = snapshot.docs.map(doc => {return {...doc.data(), id: doc.id}});
+          this.list = snapshot.docs.map((doc) => {
+            return { ...doc.data(), id: doc.id };
+          });
           this.data = this.list.find((d) => d.id == this.id) as Extract<T & { id: string }, T>;
         });
       } catch (e) {
@@ -141,9 +154,12 @@
       let searchId = id ?? this.id;
       return this.list?.find((d) => d.id == searchId) ?? (await super.getData());
     }
-    
+
     update(data: UpdateData<T>, id?: string) {
-      Object.assign(this.list.find(i => i.id == id), data);
+      Object.assign(
+        this.list.find((i) => i.id == id),
+        data
+      );
       updateDoc(doc(this.collection, id), data).catch(console.error);
       return this;
     }

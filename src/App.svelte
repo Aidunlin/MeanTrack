@@ -19,9 +19,17 @@
 
   let message = "Loading...";
 
-  const logIn = () => signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
-  const logInAnon = () => signInAnonymously($mt.auth).catch(console.error);
-  const logOut = () => signOut($mt.auth).catch(console.error);
+  function logIn() {
+    signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
+  }
+
+  function logInAnon() {
+    signInAnonymously($mt.auth).catch(console.error);
+  }
+
+  function logOut() {
+    signOut($mt.auth).catch(console.error);
+  }
 
   async function loadTeam() {
     $mt.team = new SingleFS($mt.firestore, "teams", $mt.user.data.teamId);
@@ -34,9 +42,7 @@
         $mt.unverified = null;
         $mt.team = null;
       }
-    } else {
-      $mt.team = null;
-    }
+    } else $mt.team = null;
   }
 
   async function loadUser(user: User) {
@@ -45,9 +51,7 @@
       $mt.user = new SingleFS($mt.firestore, "users", user.uid);
       if (await $mt.user.getData()) {
         if ($mt.user.data.teamId) await loadTeam();
-      } else {
-        $mt.user = $mt.user.set({ teamId: "" });
-      }
+      } else $mt.user = $mt.user.set({ teamId: "" });
     } else {
       $mt.user = null;
       $mt.team = null;
@@ -68,9 +72,7 @@
     $mt.auth = getAuth();
     $mt.firestore = getFirestore();
     onAuthStateChanged($mt.auth, loadUser);
-  } else {
-    message = "OFFLINE - MeanTrack needs an internet connection";
-  }
+  } else message = "OFFLINE - MeanTrack needs an internet connection";
 </script>
 
 <header>

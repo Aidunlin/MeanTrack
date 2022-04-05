@@ -1,6 +1,6 @@
 <script lang="ts">
   import { doc, Timestamp, writeBatch } from "firebase/firestore/lite";
-  import { Log, MemberData, mt, Week } from "./Global.svelte";
+  import { Log, MemberData, mt, sameDay, Week } from "./Global.svelte";
 
   let selectedMembers: string[] = [];
   let dayNames: string[] = [];
@@ -11,9 +11,7 @@
     logs.forEach((log) => {
       hours.total += log.hours;
       let logDate = log.start.toDate();
-      if (week.contains(logDate)) {
-        hours.days[logDate.getDay()] += log.hours;
-      }
+      if (week.contains(logDate)) hours.days[logDate.getDay()] += log.hours;
     });
     return hours;
   }
@@ -37,14 +35,15 @@
   async function adjust(member: MemberData & { id: string }, prevHours: number, dayIndex: number) {
     if ($mt.user.id != $mt.team.data.ownerId && $mt.user.id != member.id) return;
     let day = week.day(dayIndex);
-    let dayDisplay = day.toLocaleString(undefined, { dateStyle: "medium" });
+    let dayDisplay = day.toLocaleString(undefined, { dateStyle: "long" });
     let hoursPrompt = prompt(`Edit hours for:\n${member.name} - ${dayDisplay}`, `${prevHours ? prevHours : ""}`);
     let newHours = parseInt(hoursPrompt);
     if (!hoursPrompt || isNaN(newHours) || !isFinite(newHours)) return;
-    member.logs.push({
-      hours: newHours - prevHours,
-      start: Timestamp.fromDate(day),
+    let existingLog = member.logs.find((log) => {
+      return sameDay(log.start.toDate(), day);
     });
+    if (existingLog) existingLog.hours = newHours;
+    else member.logs.push({ hours: newHours, start: Timestamp.fromDate(day) });
     $mt.member = $mt.member.update({ logs: member.logs }, member.id);
   }
 
@@ -52,19 +51,19 @@
     $mt.member = $mt.member;
     dayNames = [...Array(7).keys()].map((dayIndex) => {
       let day = new Date(week.sunday.getFullYear(), week.sunday.getMonth(), week.sunday.getDate() + dayIndex);
-      return day.toLocaleDateString(undefined, { month: "numeric", day: "numeric" });
+      return day.toLocaleString(undefined, { month: "numeric", day: "numeric" });
     });
   }
 </script>
 
 <details open={$mt.user.id == $mt.team.data.ownerId}>
   <summary>Members</summary>
-  <p>Week of {week.sunday.toLocaleDateString(undefined, { dateStyle: "medium" })}</p>
+  <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
   <p>
     <button on:click={refresh} title="Refresh">↻</button>
-    <button on:click={() => week = new Week()}>This week</button>
-    <button on:click={() => week = week.previous} title="Previous week">&lt;</button>
-    <button on:click={() => week = week.next} title="Next week">&gt;</button>
+    <button on:click={() => (week = new Week())}>This week</button>
+    <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
+    <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
   </p>
   <div class="table-wrap">
     <table>
