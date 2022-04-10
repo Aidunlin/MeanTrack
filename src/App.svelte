@@ -37,11 +37,7 @@
       $mt.unverified = new ListFS($mt.team.document, "unverifieds", $mt.user.id);
       await $mt.unverified.getList();
       $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
-      if (!(await $mt.member.getList())) {
-        $mt.member = null;
-        $mt.unverified = null;
-        $mt.team = null;
-      }
+      if (!(await $mt.member.getList())) $mt.member = $mt.unverified = $mt.team = null;
     } else $mt.team = null;
   }
 
@@ -52,12 +48,7 @@
       if (await $mt.user.getData()) {
         if ($mt.user.data.teamId) await loadTeam();
       } else $mt.user = $mt.user.set({ teamId: "" });
-    } else {
-      $mt.user = null;
-      $mt.team = null;
-      $mt.member = null;
-      $mt.unverified = null;
-    }
+    } else $mt.user = $mt.team = $mt.member = $mt.unverified = null;
     $mt.loaded = true;
   }
 
@@ -99,10 +90,12 @@
         <TeamlessMenu />
       {/if}
     {:else}
-      <p><button on:click={logIn}>Log in with Google</button></p>
-      {#if location.hostname.includes("localhost")}
-        <p><button on:click={logInAnon}>Log in anonymously</button></p>
-      {/if}
+      <p>
+        <button on:click={logIn}>Log in with Google</button>
+        {#if location.hostname.includes("localhost")}
+          <button on:click={logInAnon}>Log in anonymously</button>
+        {/if}
+      </p>
     {/if}
   {:else}
     <p>{message}</p>

@@ -2,6 +2,12 @@
   import { Timestamp } from "firebase/firestore/lite";
   import { hoursBetween, mt, sameDay } from "./Global.svelte";
 
+  enum View {
+    Default,
+    Edit,
+  }
+  let viewing = View.Default;
+
   let totalHours: number;
   let tempHours: number;
   let trackingDisplay: string;
@@ -13,12 +19,7 @@
       });
       let newHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
       if (existingLog) existingLog.hours += newHours;
-      else {
-        $mt.member.data.logs.push({
-          hours: newHours,
-          start: $mt.member.data.lastAction,
-        });
-      }
+      else $mt.member.data.logs.push({ hours: newHours, start: $mt.member.data.lastAction });
     }
     $mt.member = $mt.member.update({
       lastAction: Timestamp.now(),
@@ -33,6 +34,11 @@
     return hours;
   }
 
+  let nameEditValue = $mt.member.data.name;
+  function editName() {
+    $mt.member = $mt.member.update({ name: nameEditValue });
+  }
+
   $: {
     totalHours = getHours();
     tempHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
@@ -42,13 +48,26 @@
 
 <details open>
   <summary>{$mt.member.data.name}</summary>
-  {#if $mt.member.data.logs}
+  {#if viewing == View.Default}
+    {#if $mt.member.data.logs}
+      <p>
+        Hours: {totalHours.toFixed(1)}
+        {#if $mt.member.data.tracking}
+          + {tempHours.toFixed(1)}
+        {/if}
+      </p>
+    {/if}
     <p>
-      Hours: {totalHours.toFixed(1)}
-      {#if $mt.member.data.tracking}
-        + {tempHours.toFixed(1)}
-      {/if}
+      <button on:click={toggleTracking}>{trackingDisplay} tracking</button>
+      <button on:click={() => (viewing = View.Edit)}>Edit</button>
+    </p>
+  {:else if viewing == View.Edit}
+    <p>
+      <label>Edit name:<br /><input bind:value={nameEditValue} /></label>
+      <button on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Update</button>
+    </p>
+    <p>
+      <button on:click={() => (viewing = View.Default)}>Done</button>
     </p>
   {/if}
-  <p><button on:click={toggleTracking}>{trackingDisplay} tracking</button></p>
 </details>

@@ -44,6 +44,6 @@
     </p>
   {/each}
   {#if $mt.unverified.list.length}
-    <p><button class="green" on:click={verify} disabled={!selectedUnverifieds.length}>Verify</button></p>
+    <p><button on:click={verify} disabled={!selectedUnverifieds.length}>Verify</button></p>
   {/if}
 </details>

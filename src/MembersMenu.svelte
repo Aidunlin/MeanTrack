@@ -5,6 +5,7 @@
   let selectedMembers: string[] = [];
   let dayNames: string[] = [];
   let week = new Week();
+  let showDays = innerWidth >= 600;
 
   function getHours(logs: Log[]) {
     let hours = { total: 0, days: [0, 0, 0, 0, 0, 0, 0] };
@@ -39,9 +40,7 @@
     let hoursPrompt = prompt(`Edit hours for:\n${member.name} - ${dayDisplay}`, `${prevHours ? prevHours : ""}`);
     let newHours = parseInt(hoursPrompt);
     if (!hoursPrompt || isNaN(newHours) || !isFinite(newHours)) return;
-    let existingLog = member.logs.find((log) => {
-      return sameDay(log.start.toDate(), day);
-    });
+    let existingLog = member.logs.find((log) => sameDay(log.start.toDate(), day));
     if (existingLog) existingLog.hours = newHours;
     else member.logs.push({ hours: newHours, start: Timestamp.fromDate(day) });
     $mt.member = $mt.member.update({ logs: member.logs }, member.id);
@@ -58,21 +57,33 @@
 
 <details open={$mt.user.id == $mt.team.data.ownerId}>
   <summary>Members</summary>
-  <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
+  <p>
+    <label>
+      <input type="checkbox" bind:checked={showDays} />
+      Show Days
+    </label>
+  </p>
+  {#if showDays}
+    <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
+  {/if}
   <p>
     <button on:click={refresh} title="Refresh">↻</button>
-    <button on:click={() => (week = new Week())}>This week</button>
-    <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
-    <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
+    {#if showDays}
+      <button on:click={() => (week = new Week())}>This week</button>
+      <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
+      <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
+    {/if}
   </p>
   <div class="table-wrap">
     <table>
       <tr>
         <th class="name-col">Name</th>
         <th class="hours-col">Hours</th>
-        {#each dayNames as day}
-          <th class="day-col">{day}</th>
-        {/each}
+        {#if showDays}
+          {#each dayNames as day}
+            <th class="day-col">{day}</th>
+          {/each}
+        {/if}
       </tr>
       {#if $mt.member?.list}
         {#each $mt.member.list as member (member.id)}
@@ -89,17 +100,19 @@
               {/if}
             </td>
             <td class="hours-col">{hoursData.total.toFixed(1)}</td>
-            {#each hoursData.days as hours, i}
-              <td
-                class="day-col"
-                class:editable={$mt.user.id == $mt.team.data.ownerId || $mt.user.id == member.id}
-                on:click={() => adjust(member, hours, i)}
-              >
-                {#if hours}
-                  {hours.toFixed(1)}
-                {/if}
-              </td>
-            {/each}
+            {#if showDays}
+              {#each hoursData.days as hours, i}
+                <td
+                  class="day-col"
+                  class:editable={$mt.user.id == $mt.team.data.ownerId || $mt.user.id == member.id}
+                  on:click={() => adjust(member, hours, i)}
+                >
+                  {#if hours}
+                    {hours.toFixed(1)}
+                  {/if}
+                </td>
+              {/each}
+            {/if}
           </tr>
         {/each}
       {/if}

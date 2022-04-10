@@ -145,7 +145,7 @@
       } catch (e) {
         this.list = [];
         this.data = null;
-        console.error(e);
+        console.error("Caught", e);
       }
       return this.list;
     }
@@ -156,6 +156,7 @@
     }
 
     update(data: UpdateData<T>, id?: string) {
+      if (!id) return super.update(data);
       Object.assign(
         this.list.find((i) => i.id == id),
         data

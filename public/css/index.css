@@ -10,24 +10,12 @@ body {
   max-width: 1000px;
 }
 
-:is(h1, h2, h3) {
-  border: none;
-}
-
 button.red {
   background: hsl(0, 100%, 60%);
 }
 
 button.red:hover {
   background: hsl(0, 100%, 40%);
-}
-
-button.green {
-  background: hsl(128, 100%, 30%);
-}
-
-button.green:hover {
-  background: hsl(128, 100%, 20%);
 }
 
 .table-wrap {
@@ -41,37 +29,37 @@ button.green:hover {
   width: 100%;
 }
 
-.table-wrap :is(tr, td) {
+.table-wrap * {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.table-wrap .name-col {
+.name-col {
   text-align: left;
   width: 12ch;
 }
 
-.table-wrap .hours-col {
+.hours-col {
   text-align: center;
   width: 5ch;
 }
 
-.table-wrap .day-col {
+.day-col {
   text-align: center;
   width: 4ch;
 }
 
-.table-wrap .day-col.editable:hover {
+.day-col.editable:hover {
   background: rgba(127, 127, 127, 0.1);
   cursor: pointer;
 }
 
-.table-wrap .day-col:not(:last-of-type) {
+.day-col:not(:last-of-type) {
   border-right: none;
 }
 
-.table-wrap .day-col:not(:first-of-type) {
+.day-col:not(:first-of-type) {
   border-left: none;
 }
 
