@@ -57,12 +57,7 @@
 
 <details open={$mt.user.id == $mt.team.data.ownerId}>
   <summary>Members</summary>
-  <p>
-    <label>
-      <input type="checkbox" bind:checked={showDays} />
-      Show Days
-    </label>
-  </p>
+  <p><button on:click={() => (showDays = !showDays)}>{showDays ? "Hide" : "Show"} days</button></p>
   {#if showDays}
     <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
   {/if}

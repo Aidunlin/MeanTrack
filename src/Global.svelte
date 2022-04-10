@@ -19,7 +19,7 @@
   } from "firebase/firestore/lite";
 
   export function hoursBetween(a: Timestamp, b: Timestamp) {
-    return Math.abs(a.toMillis() - b.toMillis()) / 360000;
+    return Math.abs(a.toMillis() - b.toMillis()) / 1000 / 3600;
   }
 
   export function sameDay(a: Date, b: Date) {

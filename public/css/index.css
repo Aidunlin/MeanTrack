@@ -18,6 +18,16 @@ button.red:hover {
   background: hsl(0, 100%, 40%);
 }
 
+input[type="text"],
+input[type="number"] {
+  width: 160px;
+}
+
+.editable:hover {
+  background: rgba(127, 127, 127, 0.1);
+  cursor: pointer;
+}
+
 .table-wrap {
   margin-bottom: 1rem;
   overflow-x: auto;
@@ -48,11 +58,6 @@ button.red:hover {
 .day-col {
   text-align: center;
   width: 4ch;
-}
-
-.day-col.editable:hover {
-  background: rgba(127, 127, 127, 0.1);
-  cursor: pointer;
 }
 
 .day-col:not(:last-of-type) {

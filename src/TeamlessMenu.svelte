@@ -38,14 +38,14 @@
   }
 </script>
 
-<p><label>Your name<br /><input bind:value={nameInput} /></label></p>
+<p><label>Your name<br /><input type="text" bind:value={nameInput} /></label></p>
 <details open>
   <summary>Join a team</summary>
-  <p><label>Team id<br /><input bind:value={teamIdInput} /></label></p>
+  <p><label>Team id<br /><input type="text" bind:value={teamIdInput} /></label></p>
   <p><button disabled={teamIdInput.length == 0 || nameInput.length == 0} on:click={join}>Join</button></p>
 </details>
 <details>
   <summary>Create a team</summary>
-  <p><label>Team name<br /><input bind:value={teamNameInput} /></label></p>
+  <p><label>Team name<br /><input type="text" bind:value={teamNameInput} /></label></p>
   <p><button disabled={teamNameInput.length == 0 || nameInput.length == 0} on:click={create}>Create</button></p>
 </details>

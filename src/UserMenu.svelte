@@ -6,23 +6,24 @@
     Default,
     Edit,
   }
-  let viewing = View.Default;
 
-  let totalHours: number;
-  let tempHours: number;
-  let trackingDisplay: string;
+  let viewing = View.Default;
+  let nameEditValue = $mt.member.data.name;
+  let totalHours = 0;
+  let tempHours = 0;
 
   function toggleTracking() {
+    let now = Timestamp.now();
     if ($mt.member.data.tracking) {
       let existingLog = $mt.member.data.logs.find((log) => {
         return sameDay(log.start.toDate(), $mt.member.data.lastAction.toDate());
       });
-      let newHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
+      let newHours = hoursBetween(now, $mt.member.data.lastAction);
       if (existingLog) existingLog.hours += newHours;
       else $mt.member.data.logs.push({ hours: newHours, start: $mt.member.data.lastAction });
     }
     $mt.member = $mt.member.update({
-      lastAction: Timestamp.now(),
+      lastAction: now,
       logs: $mt.member.data.logs,
       tracking: !$mt.member.data.tracking,
     });
@@ -34,7 +35,6 @@
     return hours;
   }
 
-  let nameEditValue = $mt.member.data.name;
   function editName() {
     $mt.member = $mt.member.update({ name: nameEditValue });
   }
@@ -42,7 +42,6 @@
   $: {
     totalHours = getHours();
     tempHours = hoursBetween(Timestamp.now(), $mt.member.data.lastAction);
-    trackingDisplay = $mt.member.data.tracking ? "Stop" : "Start";
   }
 </script>
 
@@ -58,12 +57,12 @@
       </p>
     {/if}
     <p>
-      <button on:click={toggleTracking}>{trackingDisplay} tracking</button>
+      <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
       <button on:click={() => (viewing = View.Edit)}>Edit</button>
     </p>
   {:else if viewing == View.Edit}
     <p>
-      <label>Edit name:<br /><input bind:value={nameEditValue} /></label>
+      <label>Edit name:<br /><input type="text" bind:value={nameEditValue} /></label>
       <button on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Update</button>
     </p>
     <p>

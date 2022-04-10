@@ -5,7 +5,6 @@
   let selectedUnverifieds: string[] = [];
 
   function verify() {
-    if (!confirm("Are you sure?")) return;
     let verifyBatch = writeBatch($mt.firestore);
     $mt.unverified.list = $mt.unverified.list.filter((member) => {
       let shouldVerify = selectedUnverifieds.includes(member.id);

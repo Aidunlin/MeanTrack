@@ -7,14 +7,15 @@
     Edit,
     Leave,
   }
-  let viewing = View.Default;
 
+  let viewing = View.Default;
   let goalEditValue = $mt.team.data.goal;
+  let nameEditValue = $mt.team.data.name;
+
   function editGoal() {
     $mt.team = $mt.team.update({ goal: goalEditValue });
   }
 
-  let nameEditValue = $mt.team.data.name;
   function editName() {
     $mt.team = $mt.team.update({ name: nameEditValue });
   }
@@ -57,7 +58,7 @@
       <button on:click={editGoal} disabled={goalEditValue == $mt.team.data.goal}>Update</button>
     </p>
     <p>
-      <label>Edit name:<br /><input bind:value={nameEditValue} /></label>
+      <label>Edit name:<br /><input type="text" bind:value={nameEditValue} /></label>
       <button on:click={editName} disabled={nameEditValue == $mt.team.data.name}>Update</button>
     </p>
     <p>
