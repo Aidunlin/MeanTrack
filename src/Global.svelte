@@ -29,6 +29,14 @@
     return sameYear && sameMonth && sameDate;
   }
 
+  export function logInCutoff(mt: MT, log: Log) {
+    if (!mt.team.data.cutoffBegin || !mt.team.data.cutoffEnd) return true;
+    let cutoffBegin = mt.team.data.cutoffBegin.toMillis();
+    let cutoffEnd = mt.team.data.cutoffEnd.toMillis();
+    let logMillis = log.start.toMillis();
+    return logMillis >= cutoffBegin && logMillis < cutoffEnd;
+  }
+
   export class Week {
     sunday: Date;
 
@@ -66,6 +74,8 @@
   }
 
   export interface TeamData {
+    cutoffBegin: Timestamp;
+    cutoffEnd: Timestamp;
     goal: number;
     name: string;
     ownerId: string;

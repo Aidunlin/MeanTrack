@@ -29,7 +29,13 @@
   async function create() {
     $mt.loaded = false;
     $mt.team = new SingleFS($mt.firestore, "teams", ".");
-    $mt.team = $mt.team.set({ goal: 0, name: teamNameInput, ownerId: $mt.user.id });
+    $mt.team = $mt.team.set({
+      cutoffBegin: new Timestamp(0, 0),
+      cutoffEnd: Timestamp.now(),
+      goal: 0,
+      name: teamNameInput,
+      ownerId: $mt.user.id,
+    });
     $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
     $mt.member = $mt.member.set({ lastAction: Timestamp.now(), logs: [], name: nameInput, tracking: false });
     $mt.unverified = new ListFS($mt.team.document, "unverifieds");

@@ -19,7 +19,8 @@ button.red:hover {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+input[type="date"] {
   width: 160px;
 }
 

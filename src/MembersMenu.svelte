@@ -1,6 +1,6 @@
 <script lang="ts">
   import { doc, Timestamp, writeBatch } from "firebase/firestore/lite";
-  import { Log, MemberData, mt, sameDay, Week } from "./Global.svelte";
+  import { Log, logInCutoff, MemberData, mt, sameDay, Week } from "./Global.svelte";
 
   let selectedMembers: string[] = [];
   let dayNames: string[] = [];
@@ -10,7 +10,9 @@
   function getHours(logs: Log[]) {
     let hours = { total: 0, days: [0, 0, 0, 0, 0, 0, 0] };
     logs.forEach((log) => {
-      hours.total += log.hours;
+      if (logInCutoff($mt, log)) {
+        hours.total += log.hours;
+      }
       let logDate = log.start.toDate();
       if (week.contains(logDate)) hours.days[logDate.getDay()] += log.hours;
     });
@@ -57,16 +59,21 @@
 
 <details open={$mt.user.id == $mt.team.data.ownerId}>
   <summary>Members</summary>
-  <p><button on:click={() => (showDays = !showDays)}>{showDays ? "Hide" : "Show"} days</button></p>
   {#if showDays}
     <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
+    <p>
+      <button on:click={() => (week = new Week())}>This<br />week</button>
+      <button on:click={() => (week = new Week($mt.team.data.cutoffBegin.toDate()))}>Cutoff<br />begin</button>
+      <button on:click={() => (week = new Week($mt.team.data.cutoffEnd.toDate()))}>Cutoff<br />end</button>
+    </p>
   {/if}
   <p>
     <button on:click={refresh} title="Refresh">↻</button>
     {#if showDays}
-      <button on:click={() => (week = new Week())}>This week</button>
       <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
       <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
+    {:else}
+      <button on:click={() => (showDays = true)}>Show days</button>
     {/if}
   </p>
   <div class="table-wrap">

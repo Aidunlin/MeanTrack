@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Timestamp } from "firebase/firestore/lite";
-  import { hoursBetween, mt, sameDay } from "./Global.svelte";
+  import { hoursBetween, logInCutoff, mt, sameDay } from "./Global.svelte";
 
   enum View {
     Default,
@@ -31,7 +31,9 @@
 
   function getHours() {
     let hours = 0;
-    $mt.member.data.logs.forEach((log) => (hours += log.hours));
+    $mt.member.data.logs.forEach((log) => {
+      if (logInCutoff($mt, log)) hours += log.hours;
+    });
     return hours;
   }
 
@@ -62,7 +64,7 @@
     </p>
   {:else if viewing == View.Edit}
     <p>
-      <label>Edit name:<br /><input type="text" bind:value={nameEditValue} /></label>
+      <label>Name:<br /><input type="text" bind:value={nameEditValue} /></label>
       <button on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Update</button>
     </p>
     <p>
