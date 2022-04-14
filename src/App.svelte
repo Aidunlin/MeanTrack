@@ -6,7 +6,6 @@
     onAuthStateChanged,
     signInAnonymously,
     signInWithPopup,
-    signOut,
     User,
   } from "firebase/auth";
   import { getFirestore } from "firebase/firestore/lite";
@@ -25,10 +24,6 @@
 
   function logInAnon() {
     signInAnonymously($mt.auth).catch(console.error);
-  }
-
-  function logOut() {
-    signOut($mt.auth).catch(console.error);
   }
 
   async function loadTeam() {
@@ -74,7 +69,6 @@
 <main>
   {#if $mt.loaded}
     {#if $mt.user?.data}
-      <p><button on:click={logOut}>Log out</button></p>
       {#if $mt.team?.data}
         {#if $mt.member?.data}
           <UserMenu />
@@ -90,9 +84,9 @@
         <TeamlessMenu />
       {/if}
     {:else}
-      <p>
+      <p class="overflow-wide">
         <button on:click={logIn}>Log in with Google</button>
-        {#if location.hostname.includes("localhost")}
+        {#if !location.hostname.toLowerCase().includes("meantrack")}
           <button on:click={logInAnon}>Log in anonymously</button>
         {/if}
       </p>

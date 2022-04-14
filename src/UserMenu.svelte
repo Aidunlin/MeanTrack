@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Timestamp } from "firebase/firestore/lite";
-  import { hoursBetween, logInCutoff, mt, sameDay } from "./Global.svelte";
+  import { hoursBetween, logOut, mt, sameDay, withinCutoff } from "./Global.svelte";
 
   enum View {
     Default,
@@ -32,7 +32,7 @@
   function getHours() {
     let hours = 0;
     $mt.member.data.logs.forEach((log) => {
-      if (logInCutoff($mt, log)) hours += log.hours;
+      if (withinCutoff($mt, log)) hours += log.hours;
     });
     return hours;
   }
@@ -58,9 +58,10 @@
         {/if}
       </p>
     {/if}
-    <p>
+    <p class="overflow-wide">
       <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
       <button on:click={() => (viewing = View.Edit)}>Edit</button>
+      <button on:click={logOut}>Log out</button>
     </p>
   {:else if viewing == View.Edit}
     <p>

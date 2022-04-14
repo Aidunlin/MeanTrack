@@ -29,36 +29,34 @@ input[type="date"] {
   cursor: pointer;
 }
 
-.table-wrap {
-  margin-bottom: 1rem;
+.overflow-wide {
   overflow-x: auto;
+  white-space: nowrap;
 }
 
-.table-wrap table {
-  margin-bottom: 0;
+table {
   table-layout: fixed;
   width: 100%;
 }
 
-.table-wrap * {
+table, table * {
   overflow: hidden;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .name-col {
   text-align: left;
-  width: 12ch;
+  width: 8em;
 }
 
 .hours-col {
-  text-align: center;
-  width: 5ch;
+  width: 3em;
 }
 
 .day-col {
-  text-align: center;
-  width: 4ch;
+  width: 3em;
 }
 
 .day-col:not(:last-of-type) {
@@ -67,11 +65,4 @@ input[type="date"] {
 
 .day-col:not(:first-of-type) {
   border-left: none;
-}
-
-::-webkit-inner-spin-button,
-::-webkit-outer-spin-button {
-  appearance: none;
-  -moz-appearance: none;
-  -webkit-appearance: none;
 }

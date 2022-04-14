@@ -1,6 +1,5 @@
 <script lang="ts" context="module">
-  import type { Auth } from "firebase/auth";
-  import { writable } from "svelte/store";
+  import { Auth, getAuth, signOut } from "firebase/auth";
   import {
     collection,
     CollectionReference,
@@ -17,6 +16,11 @@
     UpdateData,
     updateDoc,
   } from "firebase/firestore/lite";
+  import { writable } from "svelte/store";
+  
+  export function logOut() {
+    signOut(getAuth()).catch(console.error);
+  }
 
   export function hoursBetween(a: Timestamp, b: Timestamp) {
     return Math.abs(a.toMillis() - b.toMillis()) / 1000 / 3600;
@@ -29,7 +33,7 @@
     return sameYear && sameMonth && sameDate;
   }
 
-  export function logInCutoff(mt: MT, log: Log) {
+  export function withinCutoff(mt: MT, log: Log) {
     if (!mt.team.data.cutoffBegin || !mt.team.data.cutoffEnd) return true;
     let cutoffBegin = mt.team.data.cutoffBegin.toMillis();
     let cutoffEnd = mt.team.data.cutoffEnd.toMillis();

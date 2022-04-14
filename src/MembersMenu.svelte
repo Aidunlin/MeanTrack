@@ -1,16 +1,15 @@
 <script lang="ts">
   import { doc, Timestamp, writeBatch } from "firebase/firestore/lite";
-  import { Log, logInCutoff, MemberData, mt, sameDay, Week } from "./Global.svelte";
+  import { Log, MemberData, mt, sameDay, Week, withinCutoff } from "./Global.svelte";
 
   let selectedMembers: string[] = [];
   let dayNames: string[] = [];
   let week = new Week();
-  let showDays = innerWidth >= 600;
 
   function getHours(logs: Log[]) {
     let hours = { total: 0, days: [0, 0, 0, 0, 0, 0, 0] };
     logs.forEach((log) => {
-      if (logInCutoff($mt, log)) {
+      if (withinCutoff($mt, log)) {
         hours.total += log.hours;
       }
       let logDate = log.start.toDate();
@@ -59,33 +58,23 @@
 
 <details open={$mt.user.id == $mt.team.data.ownerId}>
   <summary>Members</summary>
-  {#if showDays}
-    <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
-    <p>
-      <button on:click={() => (week = new Week())}>This<br />week</button>
-      <button on:click={() => (week = new Week($mt.team.data.cutoffBegin.toDate()))}>Cutoff<br />begin</button>
-      <button on:click={() => (week = new Week($mt.team.data.cutoffEnd.toDate()))}>Cutoff<br />end</button>
-    </p>
-  {/if}
-  <p>
+  <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
+  <p class="overflow-wide">
     <button on:click={refresh} title="Refresh">↻</button>
-    {#if showDays}
-      <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
-      <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
-    {:else}
-      <button on:click={() => (showDays = true)}>Show days</button>
-    {/if}
+    <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
+    <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
+    <button on:click={() => (week = new Week())}>This week</button>
+    <button on:click={() => (week = new Week($mt.team.data.cutoffBegin.toDate()))}>Cutoff begin</button>
+    <button on:click={() => (week = new Week($mt.team.data.cutoffEnd.toDate()))}>Cutoff end</button>
   </p>
-  <div class="table-wrap">
+  <div class="overflow-wide">
     <table>
       <tr>
         <th class="name-col">Name</th>
         <th class="hours-col">Hours</th>
-        {#if showDays}
-          {#each dayNames as day}
-            <th class="day-col">{day}</th>
-          {/each}
-        {/if}
+        {#each dayNames as day}
+          <th class="day-col">{day}</th>
+        {/each}
       </tr>
       {#if $mt.member?.list}
         {#each $mt.member.list as member (member.id)}
@@ -102,19 +91,17 @@
               {/if}
             </td>
             <td class="hours-col">{hoursData.total.toFixed(1)}</td>
-            {#if showDays}
-              {#each hoursData.days as hours, i}
-                <td
-                  class="day-col"
-                  class:editable={$mt.user.id == $mt.team.data.ownerId || $mt.user.id == member.id}
-                  on:click={() => adjust(member, hours, i)}
-                >
-                  {#if hours}
-                    {hours.toFixed(1)}
-                  {/if}
-                </td>
-              {/each}
-            {/if}
+            {#each hoursData.days as hours, i}
+              <td
+                class="day-col"
+                class:editable={$mt.user.id == $mt.team.data.ownerId || $mt.user.id == member.id}
+                on:click={() => adjust(member, hours, i)}
+              >
+                {#if hours}
+                  {hours.toFixed(1)}
+                {/if}
+              </td>
+            {/each}
           </tr>
         {/each}
       {/if}

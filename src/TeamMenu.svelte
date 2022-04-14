@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Timestamp } from "firebase/firestore/lite";
-  import { mt } from "./Global.svelte";
+  import { logOut, mt } from "./Global.svelte";
 
   enum View {
     Default,
@@ -62,7 +62,7 @@
         </p>
       {/if}
       <p>Goal: {$mt.team.data.goal} hours</p>
-      <p>
+      <p class="overflow-wide">
         <button on:click={() => (viewing = View.ShareId)}>Share id</button>
         {#if $mt.user.id == $mt.team.data.ownerId}
           <button on:click={() => (viewing = View.Edit)}>Edit</button>
@@ -77,6 +77,7 @@
       {/if}
       <p>
         <button on:click={() => (viewing = View.Leave)}>Leave</button>
+        <button on:click={logOut}>Log out</button>
       </p>
     {/if}
   {:else if viewing == View.ShareId}
@@ -114,7 +115,7 @@
     </p>
   {:else if viewing == View.Leave}
     <p>Are you sure you want to leave?</p>
-    <p>
+    <p class="overflow-wide">
       <button class="red" on:click={leave}>Confirm</button>
       <button on:click={() => (viewing = View.Default)}>Cancel</button>
     </p>

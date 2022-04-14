@@ -1,6 +1,6 @@
 <script lang="ts">
   import { doc, Timestamp } from "firebase/firestore/lite";
-  import { ListFS, mt, SingleFS } from "./Global.svelte";
+  import { ListFS, logOut, mt, SingleFS } from "./Global.svelte";
 
   let nameInput = $mt.auth.currentUser.displayName;
   let teamIdInput = "";
@@ -55,3 +55,4 @@
   <p><label>Team name<br /><input type="text" bind:value={teamNameInput} /></label></p>
   <p><button disabled={teamNameInput.length == 0 || nameInput.length == 0} on:click={create}>Create</button></p>
 </details>
+<p><button on:click={logOut}>Log out</button></p>
