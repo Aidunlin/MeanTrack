@@ -84,7 +84,7 @@
         <TeamlessMenu />
       {/if}
     {:else}
-      <p class="overflow-wide">
+      <p>
         <button on:click={logIn}>Log in with Google</button>
         {#if !location.hostname.toLowerCase().includes("meantrack")}
           <button on:click={logInAnon}>Log in anonymously</button>

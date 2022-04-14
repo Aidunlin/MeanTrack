@@ -1,13 +1,9 @@
 <script lang="ts">
   import { Timestamp } from "firebase/firestore/lite";
   import { hoursBetween, logOut, mt, sameDay, withinCutoff } from "./Global.svelte";
+  import Dialog from "./Dialog.svelte";
 
-  enum View {
-    Default,
-    Edit,
-  }
-
-  let viewing = View.Default;
+  let showEditDialog = false;
   let nameEditValue = $mt.member.data.name;
   let totalHours = 0;
   let tempHours = 0;
@@ -47,29 +43,24 @@
   }
 </script>
 
+<Dialog bind:open={showEditDialog}>
+  <label>Edit your name:<br /><input type="text" bind:value={nameEditValue} /></label>
+  <button slot="buttons" on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Apply</button>
+</Dialog>
+
 <details open>
   <summary>{$mt.member.data.name}</summary>
-  {#if viewing == View.Default}
-    {#if $mt.member.data.logs}
-      <p>
-        Hours: {totalHours.toFixed(1)}
-        {#if $mt.member.data.tracking}
-          + {tempHours.toFixed(1)}
-        {/if}
-      </p>
-    {/if}
-    <p class="overflow-wide">
-      <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
-      <button on:click={() => (viewing = View.Edit)}>Edit</button>
-      <button on:click={logOut}>Log out</button>
-    </p>
-  {:else if viewing == View.Edit}
+  {#if $mt.member.data.logs}
     <p>
-      <label>Name:<br /><input type="text" bind:value={nameEditValue} /></label>
-      <button on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Update</button>
-    </p>
-    <p>
-      <button on:click={() => (viewing = View.Default)}>Done</button>
+      Hours: {totalHours.toFixed(1)}
+      {#if $mt.member.data.tracking}
+        + {tempHours.toFixed(1)}
+      {/if}
     </p>
   {/if}
+  <p class="overflow-wide">
+    <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
+    <button on:click={() => (showEditDialog = true)}>Edit</button>
+    <button on:click={logOut}>Log out</button>
+  </p>
 </details>

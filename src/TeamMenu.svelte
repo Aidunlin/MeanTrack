@@ -1,15 +1,11 @@
 <script lang="ts">
   import { Timestamp } from "firebase/firestore/lite";
   import { logOut, mt } from "./Global.svelte";
+  import Dialog from "./Dialog.svelte";
 
-  enum View {
-    Default,
-    ShareId,
-    Edit,
-    Leave,
-  }
-
-  let viewing = View.Default;
+  let showShareIdDialog = false;
+  let showEditDialog = false;
+  let showLeaveDialog = false;
   let cutoffBeginEditValue = cutoffToString($mt.team.data.cutoffBegin?.toDate());
   let cutoffEndEditValue = cutoffToString($mt.team.data.cutoffEnd?.toDate());
   let goalEditValue = $mt.team.data.goal;
@@ -28,96 +24,80 @@
     return Timestamp.fromDate(date);
   }
 
-  function editCutoffBegin() {
-    $mt.team = $mt.team.update({ cutoffBegin: stringToCutoff(cutoffBeginEditValue) });
+  function editTeam() {
+    $mt.team = $mt.team.update({
+      cutoffBegin: stringToCutoff(cutoffBeginEditValue),
+      cutoffEnd: stringToCutoff(cutoffEndEditValue),
+      goal: goalEditValue,
+      name: nameEditValue,
+    });
   }
 
-  function editCutoffEnd() {
-    $mt.team = $mt.team.update({ cutoffEnd: stringToCutoff(cutoffEndEditValue) });
-  }
-
-  function editGoal() {
-    $mt.team = $mt.team.update({ goal: goalEditValue });
-  }
-
-  function editName() {
-    $mt.team = $mt.team.update({ name: nameEditValue });
+  function dialogHasChanges() {
+    let cutoffBeginChanged = cutoffBeginEditValue != cutoffToString($mt.team.data.cutoffBegin?.toDate());
+    let cutoffEndChanged = cutoffEndEditValue != cutoffToString($mt.team.data.cutoffEnd?.toDate());
+    let goalChanged = goalEditValue != $mt.team.data.goal;
+    let nameChanged = nameEditValue != $mt.team.data.name;
+    return cutoffBeginChanged || cutoffEndChanged || goalChanged || nameChanged;
   }
 
   function leave() {
     $mt.user = $mt.user.set({ teamId: "" });
     $mt.team = $mt.member = $mt.unverified = null;
-    viewing = View.Default;
+    showLeaveDialog = false;
   }
 </script>
 
+<Dialog bind:open={showShareIdDialog}>
+  <label>Share team id:<br /><input type="text" value={$mt.team.id} readonly /></label>
+</Dialog>
+
+<Dialog bind:open={showEditDialog}>
+  <p>Edit {$mt.team.data.name}</p>
+  <label>Cutoff begin:<br /><input type="date" bind:value={cutoffBeginEditValue} /></label>
+  <label>Cutoff end:<br /><input type="date" bind:value={cutoffEndEditValue} /></label>
+  <label>Goal:<br /><input type="number" pattern="[0-9]*" bind:value={goalEditValue} /></label>
+  <label>Name:<br /><input type="text" bind:value={nameEditValue} /></label>
+  <button
+    slot="buttons"
+    on:click={editTeam}
+    disabled={!(dialogHasChanges() && cutoffBeginEditValue && cutoffEndEditValue && goalEditValue && nameEditValue)}
+  >
+    Apply
+  </button>
+</Dialog>
+
+<Dialog bind:open={showLeaveDialog}>
+  <p>Are you sure you want to leave?</p>
+  <button slot="buttons" class="red" on:click={leave}>Confirm</button>
+</Dialog>
+
 <details open>
   <summary>{$mt.team.data.name}</summary>
-  {#if viewing == View.Default}
-    {#if $mt.member?.data}
-      {#if $mt.team.data.cutoffBegin && $mt.team.data.cutoffEnd}
-        <p>
-          Cutoff: {$mt.team.data.cutoffBegin.toDate().toLocaleString(undefined, { dateStyle: "medium" })}
-          - {$mt.team.data.cutoffEnd.toDate().toLocaleString(undefined, { dateStyle: "medium" })}
-        </p>
-      {/if}
-      <p>Goal: {$mt.team.data.goal} hours</p>
-      <p class="overflow-wide">
-        <button on:click={() => (viewing = View.ShareId)}>Share id</button>
-        {#if $mt.user.id == $mt.team.data.ownerId}
-          <button on:click={() => (viewing = View.Edit)}>Edit</button>
-        {/if}
-        <button on:click={() => (viewing = View.Leave)}>Leave</button>
-      </p>
-    {:else}
-      {#if $mt.unverified?.data}
-        <p>You are unverified</p>
-      {:else}
-        <p>You've been removed</p>
-      {/if}
+  {#if $mt.member?.data}
+    {#if $mt.team.data.cutoffBegin && $mt.team.data.cutoffEnd}
       <p>
-        <button on:click={() => (viewing = View.Leave)}>Leave</button>
-        <button on:click={logOut}>Log out</button>
+        Cutoff: {$mt.team.data.cutoffBegin.toDate().toLocaleString(undefined, { dateStyle: "medium" })}
+        - {$mt.team.data.cutoffEnd.toDate().toLocaleString(undefined, { dateStyle: "medium" })}
       </p>
     {/if}
-  {:else if viewing == View.ShareId}
-    <p>Id: <code>{$mt.team.id}</code></p>
-    <p><button on:click={() => (viewing = View.Default)}>Done</button></p>
-  {:else if viewing == View.Edit}
+    <p>Goal: {$mt.team.data.goal} hours</p>
     <p>
-      <label>Cutoff begin:<br /><input type="date" bind:value={cutoffBeginEditValue} /></label>
-      <button
-        on:click={editCutoffBegin}
-        disabled={cutoffBeginEditValue == cutoffToString($mt.team.data.cutoffBegin?.toDate())}
-      >
-        Update
-      </button>
+      <button on:click={() => (showShareIdDialog = true)}>Share id</button>
+      {#if $mt.user.id == $mt.team.data.ownerId}
+        <button on:click={() => (showEditDialog = true)}>Edit</button>
+      {/if}
+      <button on:click={() => (showLeaveDialog = true)}>Leave</button>
     </p>
+  {:else}
+    {#if $mt.unverified?.data}
+      <p>You are unverified</p>
+    {:else}
+      <p>You've been removed</p>
+    {/if}
     <p>
-      <label>Cutoff end:<br /><input type="date" bind:value={cutoffEndEditValue} /></label>
-      <button
-        on:click={editCutoffEnd}
-        disabled={cutoffEndEditValue == cutoffToString($mt.team.data.cutoffEnd?.toDate())}
-      >
-        Update
-      </button>
-    </p>
-    <p>
-      <label>Goal:<br /><input type="number" pattern="[0-9]*" bind:value={goalEditValue} /></label>
-      <button on:click={editGoal} disabled={goalEditValue == $mt.team.data.goal}>Update</button>
-    </p>
-    <p>
-      <label>Name:<br /><input type="text" bind:value={nameEditValue} /></label>
-      <button on:click={editName} disabled={nameEditValue == $mt.team.data.name}>Update</button>
-    </p>
-    <p>
-      <button on:click={() => (viewing = View.Default)}>Done</button>
-    </p>
-  {:else if viewing == View.Leave}
-    <p>Are you sure you want to leave?</p>
-    <p class="overflow-wide">
-      <button class="red" on:click={leave}>Confirm</button>
-      <button on:click={() => (viewing = View.Default)}>Cancel</button>
+      <button on:click={() => (showLeaveDialog = true)}>Leave</button>
+      <button on:click={logOut}>Log out</button>
     </p>
   {/if}
 </details>
