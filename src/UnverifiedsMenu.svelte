@@ -31,16 +31,14 @@
   }
 </script>
 
-<details>
+<details open={!!$mt.unverified.list.length}>
   <summary>Unverified</summary>
   <p><button on:click={refresh} title="Refresh">↻</button></p>
   {#each $mt.unverified.list as unverified (unverified.id)}
-    <p>
-      <label>
-        <input type="checkbox" bind:group={selectedUnverifieds} name="unverifieds" value={unverified.id} />
-        {unverified.name}
-      </label>
-    </p>
+    <label>
+      <input type="checkbox" bind:group={selectedUnverifieds} name="unverifieds" value={unverified.id} />
+      {unverified.name}
+    </label>
   {/each}
   {#if $mt.unverified.list.length}
     <p><button on:click={verify} disabled={!selectedUnverifieds.length}>Verify</button></p>

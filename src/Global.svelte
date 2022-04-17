@@ -17,7 +17,7 @@
     updateDoc,
   } from "firebase/firestore/lite";
   import { writable } from "svelte/store";
-  
+
   export function logOut() {
     signOut(getAuth()).catch(console.error);
   }

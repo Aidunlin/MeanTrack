@@ -104,8 +104,8 @@
 
 <Dialog bind:open={adjustData.show}>
   <p>{adjustData.member.name} - {adjustData.dayDisplay}</p>
-  <label>Edit hours:<br /><input type="number" bind:value={adjustData.newHours} /></label>
-  <button slot="buttons" on:click={adjust} disabled={adjustData.newHours == adjustData.prevHours}>Apply</button>
+  <label>Edit hours<input type="number" bind:value={adjustData.newHours} /></label>
+  <button slot="dialog-button" on:click={adjust} disabled={adjustData.newHours == adjustData.prevHours}>Apply</button>
 </Dialog>
 
 <details open={$mt.user.id == $mt.team.data.ownerId}>

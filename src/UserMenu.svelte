@@ -44,8 +44,8 @@
 </script>
 
 <Dialog bind:open={showEditDialog}>
-  <label>Edit your name:<br /><input type="text" bind:value={nameEditValue} /></label>
-  <button slot="buttons" on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Apply</button>
+  <label>Edit your name<input type="text" bind:value={nameEditValue} /></label>
+  <button slot="dialog-button" on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Apply</button>
 </Dialog>
 
 <details open>

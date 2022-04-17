@@ -49,17 +49,17 @@
 </script>
 
 <Dialog bind:open={showShareIdDialog}>
-  <label>Share team id:<br /><input type="text" value={$mt.team.id} readonly /></label>
+  <label>Share team id<input type="text" value={$mt.team.id} readonly /></label>
 </Dialog>
 
 <Dialog bind:open={showEditDialog}>
   <p>Edit {$mt.team.data.name}</p>
-  <label>Cutoff begin:<br /><input type="date" bind:value={cutoffBeginEditValue} /></label>
-  <label>Cutoff end:<br /><input type="date" bind:value={cutoffEndEditValue} /></label>
-  <label>Goal:<br /><input type="number" pattern="[0-9]*" bind:value={goalEditValue} /></label>
-  <label>Name:<br /><input type="text" bind:value={nameEditValue} /></label>
+  <label>Cutoff begin<input type="date" bind:value={cutoffBeginEditValue} /></label>
+  <label>Cutoff end<input type="date" bind:value={cutoffEndEditValue} /></label>
+  <label>Goal<input type="number" pattern="[0-9]*" bind:value={goalEditValue} /></label>
+  <label>Name<input type="text" bind:value={nameEditValue} /></label>
   <button
-    slot="buttons"
+    slot="dialog-button"
     on:click={editTeam}
     disabled={!(dialogHasChanges() && cutoffBeginEditValue && cutoffEndEditValue && goalEditValue && nameEditValue)}
   >
@@ -69,7 +69,7 @@
 
 <Dialog bind:open={showLeaveDialog}>
   <p>Are you sure you want to leave?</p>
-  <button slot="buttons" class="red" on:click={leave}>Confirm</button>
+  <button slot="dialog-button" class="red" on:click={leave}>Confirm</button>
 </Dialog>
 
 <details open>

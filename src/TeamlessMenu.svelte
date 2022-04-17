@@ -14,7 +14,7 @@
       $mt.user = $mt.user.set({ teamId: $mt.team.id });
       if ($mt.user.id == $mt.team.data.ownerId) {
         $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
-        await $mt.member.getData();
+        await $mt.member.getList();
       } else {
         $mt.unverified.document = doc($mt.unverified.collection, $mt.user.id);
         $mt.unverified = $mt.unverified.set({ name: nameInput });
@@ -44,15 +44,15 @@
   }
 </script>
 
-<label>Your name<br /><input type="text" bind:value={nameInput} /></label>
+<label>Your name<input type="text" bind:value={nameInput} /></label>
 <details open>
   <summary>Join a team</summary>
-  <label>Team id<br /><input type="text" bind:value={teamIdInput} /></label>
+  <label>Team id<input type="text" bind:value={teamIdInput} /></label>
   <button disabled={teamIdInput.length == 0 || nameInput.length == 0} on:click={join}>Join</button>
 </details>
 <details>
   <summary>Create a team</summary>
-  <label>Team name<br /><input type="text" bind:value={teamNameInput} /></label>
+  <label>Team name<input type="text" bind:value={teamNameInput} /></label>
   <button disabled={teamNameInput.length == 0 || nameInput.length == 0} on:click={create}>Create</button>
 </details>
 <p><button on:click={logOut}>Log out</button></p>
