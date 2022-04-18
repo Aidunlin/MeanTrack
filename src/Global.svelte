@@ -41,6 +41,10 @@
     return logMillis >= cutoffBegin && logMillis < cutoffEnd;
   }
 
+  export function isOwner(mt: MT) {
+    return mt.user.id == mt.team.data.ownerId;
+  }
+
   export class Week {
     sunday: Date;
 

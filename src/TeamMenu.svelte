@@ -61,7 +61,7 @@
   <button
     slot="dialog-button"
     on:click={editTeam}
-    disabled={!(dialogHasChanges() && cutoffBeginEditValue && cutoffEndEditValue && goalEditValue && nameEditValue)}
+    disabled={!(cutoffBeginEditValue && cutoffEndEditValue && goalEditValue && nameEditValue && dialogHasChanges())}
   >
     Apply
   </button>

@@ -9,7 +9,7 @@
     User,
   } from "firebase/auth";
   import { getFirestore } from "firebase/firestore/lite";
-  import { ListFS, mt, SingleFS } from "./Global.svelte";
+  import { isOwner, ListFS, mt, SingleFS } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
   import TeamMenu from "./TeamMenu.svelte";
   import TeamlessMenu from "./TeamlessMenu.svelte";
@@ -77,7 +77,7 @@
         {#if $mt.member?.data}
           <MembersMenu />
         {/if}
-        {#if $mt.user.id == $mt.team.data.ownerId}
+        {#if isOwner($mt)}
           <UnverifiedsMenu />
         {/if}
       {:else}

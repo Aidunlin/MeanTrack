@@ -1,6 +1,6 @@
 <script lang="ts">
   import { doc, Timestamp } from "firebase/firestore/lite";
-  import { ListFS, logOut, mt, SingleFS } from "./Global.svelte";
+  import { isOwner, ListFS, logOut, mt, SingleFS } from "./Global.svelte";
 
   let nameInput = $mt.auth.currentUser.displayName;
   let teamIdInput = "";
@@ -12,7 +12,7 @@
     if (await $mt.team.getData()) {
       $mt.unverified = new ListFS($mt.team.document, "unverifieds");
       $mt.user = $mt.user.set({ teamId: $mt.team.id });
-      if ($mt.user.id == $mt.team.data.ownerId) {
+      if (isOwner($mt)) {
         $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
         await $mt.member.getList();
       } else {
@@ -48,11 +48,11 @@
 <details open>
   <summary>Join a team</summary>
   <label>Team id<input type="text" bind:value={teamIdInput} /></label>
-  <button disabled={teamIdInput.length == 0 || nameInput.length == 0} on:click={join}>Join</button>
+  <button disabled={!teamIdInput.length || !nameInput.length} on:click={join}>Join</button>
 </details>
 <details>
   <summary>Create a team</summary>
   <label>Team name<input type="text" bind:value={teamNameInput} /></label>
-  <button disabled={teamNameInput.length == 0 || nameInput.length == 0} on:click={create}>Create</button>
+  <button disabled={!teamNameInput.length || !nameInput.length} on:click={create}>Create</button>
 </details>
 <p><button on:click={logOut}>Log out</button></p>
