@@ -1,25 +1,25 @@
 /* Based on new.css (https://newcss.net/) */
 
 :root {
-  --text-1: #000000;
-  --text-2: #1a1a1a;
-  --back-1: #ffffff;
-  --back-2: #f6f8fa;
-  --back-3: #e5e7eb;
-  --link-1: #0070f3;
-  --link-2: #0366d6;
+  --text-1: #ffffff;
+  --text-2: #eeeeee;
+  --back-1: #000000;
+  --back-2: #111111;
+  --back-3: #222222;
+  --link-1: #3291ff;
+  --link-2: #0070f3;
   --link-tx: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --text-1: #ffffff;
-    --text-2: #eeeeee;
-    --back-1: #000000;
-    --back-2: #111111;
-    --back-3: #222222;
-    --link-1: #3291ff;
-    --link-2: #0070f3;
+    --text-1: #000000;
+    --text-2: #1a1a1a;
+    --back-1: #ffffff;
+    --back-2: #f6f8fa;
+    --back-3: #e5e7eb;
+    --link-1: #0070f3;
+    --link-2: #0366d6;
   }
 }
 
