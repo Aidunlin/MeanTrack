@@ -6,10 +6,10 @@
   <div class="dialog" on:mousedown={() => (open = false)}>
     <div class="dialog-content" on:mousedown={(e) => e.stopPropagation()}>
       <slot />
-      <p>
+      <div class="buttons">
         <slot name="dialog-button" />
         <button on:click={() => (open = false)}>Close</button>
-      </p>
+      </div>
     </div>
   </div>
 {/if}

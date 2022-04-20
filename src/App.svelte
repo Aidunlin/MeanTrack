@@ -1,13 +1,6 @@
 <script lang="ts">
   import { initializeApp } from "firebase/app";
-  import {
-    getAuth,
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signInAnonymously,
-    signInWithPopup,
-    User,
-  } from "firebase/auth";
+  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
   import { getFirestore } from "firebase/firestore/lite";
   import { isOwner, ListFS, mt, SingleFS } from "./Global.svelte";
   import UserMenu from "./UserMenu.svelte";
@@ -20,10 +13,6 @@
 
   function logIn() {
     signInWithPopup($mt.auth, new GoogleAuthProvider()).catch(console.error);
-  }
-
-  function logInAnon() {
-    signInAnonymously($mt.auth).catch(console.error);
   }
 
   async function loadTeam() {
@@ -74,7 +63,7 @@
           <UserMenu />
         {/if}
         <TeamMenu />
-        {#if $mt.member?.data}
+        {#if $mt.member?.list}
           <MembersMenu />
         {/if}
         {#if isOwner($mt)}
@@ -84,12 +73,7 @@
         <TeamlessMenu />
       {/if}
     {:else}
-      <p>
-        <button on:click={logIn}>Log in with Google</button>
-        {#if !location.hostname.toLowerCase().includes("meantrack")}
-          <button on:click={logInAnon}>Log in anonymously</button>
-        {/if}
-      </p>
+      <div class="buttons"><button on:click={logIn}>Log in with Google</button></div>
     {/if}
   {:else}
     <p>{message}</p>
@@ -98,12 +82,12 @@
 
 <footer>
   <p>
-    View <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">Repo</a>
-    | <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c" target="_blank">Doc</a>
-  </p>
-  <p>
     Made with <a href="https://firebase.google.com/" target="_blank">Firebase</a>
     | <a href="https://svelte.dev/" target="_blank">Svelte</a>
     | <a href="https://newcss.net/" target="_blank">new.css</a>
+  </p>
+  <p>
+    View <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">Repo</a>
+    | <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c" target="_blank">Doc</a>
   </p>
 </footer>

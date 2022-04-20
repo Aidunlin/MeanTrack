@@ -82,22 +82,22 @@
       </p>
     {/if}
     <p>Goal: {$mt.team.data.goal} hours</p>
-    <p>
+    <div class="buttons">
       <button on:click={() => (showShareIdDialog = true)}>Share id</button>
       {#if $mt.user.id == $mt.team.data.ownerId}
         <button on:click={() => (showEditDialog = true)}>Edit</button>
       {/if}
       <button on:click={() => (showLeaveDialog = true)}>Leave</button>
-    </p>
+    </div>
   {:else}
     {#if $mt.unverified?.data}
       <p>You are unverified</p>
     {:else}
       <p>You've been removed</p>
     {/if}
-    <p>
+    <div class="buttons">
       <button on:click={() => (showLeaveDialog = true)}>Leave</button>
       <button on:click={logOut}>Log out</button>
-    </p>
+    </div>
   {/if}
 </details>

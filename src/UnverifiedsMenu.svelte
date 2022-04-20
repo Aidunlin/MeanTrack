@@ -33,7 +33,7 @@
 
 <details open={!!$mt.unverified.list.length}>
   <summary>Unverified</summary>
-  <p><button on:click={refresh} title="Refresh">↻</button></p>
+  <div class="buttons"><button on:click={refresh} title="Refresh">↻</button></div>
   {#each $mt.unverified.list as unverified (unverified.id)}
     <label>
       <input type="checkbox" bind:group={selectedUnverifieds} name="unverifieds" value={unverified.id} />
@@ -41,6 +41,6 @@
     </label>
   {/each}
   {#if $mt.unverified.list.length}
-    <p><button on:click={verify} disabled={!selectedUnverifieds.length}>Verify</button></p>
+    <div class="buttons"><button on:click={verify} disabled={!selectedUnverifieds.length}>Verify</button></div>
   {/if}
 </details>

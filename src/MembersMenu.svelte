@@ -8,8 +8,9 @@
 
   let editMemberData: {
     member: MemberData & { id: string };
+    newName: string;
     show: boolean;
-  } = { member: null, show: false };
+  } = { member: null, newName: "", show: false };
 
   let adjustData: {
     dayDisplay: string;
@@ -36,22 +37,26 @@
 
   function showEditMember(member: MemberData & { id: string }) {
     if (!isOwner($mt)) return;
-    editMemberData = { member, show: true };
+    editMemberData = { member, newName: member.name, show: true };
+  }
+
+  function editMember() {
+    $mt.member = $mt.member.update({ name: editMemberData.newName }, editMemberData.member.id);
   }
 
   function removeMember() {
     if (!confirm("Are you sure?")) return;
     $mt.member.list = $mt.member.list.filter((member) => {
-      let shouldRemove = member.id == editMemberData.member.id && !isOwner($mt);
+      let shouldRemove = member.id == editMemberData.member.id && member.id != $mt.team.data.ownerId;
       if (shouldRemove) deleteDoc(doc($mt.member.collection, member.id));
       return !shouldRemove;
     });
-    editMemberData = { member: null, show: false };
+    editMemberData = { member: null, newName: "", show: false };
   }
 
   function showAdjust(member: MemberData & { id: string }, prevHours: number, dayIndex: number) {
     if (!isOwner($mt) && $mt.user.id != member.id) return;
-    let fixedPrevHours = parseInt(prevHours.toFixed(1));
+    let fixedPrevHours = parseFloat(prevHours.toFixed(1));
     adjustData = {
       dayDisplay: week.day(dayIndex).toLocaleString(undefined, { dateStyle: "medium" }),
       dayIndex,
@@ -82,30 +87,34 @@
 </script>
 
 <Dialog bind:open={editMemberData.show}>
-  <p>{editMemberData.member.name}</p>
-  {#if $mt.team.data.ownerId != editMemberData.member.id}
-    <p><button class="red" on:click={removeMember}>Remove</button></p>
-  {/if}
+  <p>Edit {editMemberData.member.name}</p>
+  <label>Name<input type="text" bind:value={editMemberData.newName} /></label>
+  <span slot="dialog-button">
+    <button on:click={editMember} disabled={editMemberData.newName == editMemberData.member.name}>Apply</button>
+    <button class="red" on:click={removeMember} disabled={editMemberData.member.id == $mt.team.data.ownerId}>
+      Remove
+    </button>
+  </span>
 </Dialog>
 
 <Dialog bind:open={adjustData.show}>
-  <p>{adjustData.member.name} - {adjustData.dayDisplay}</p>
-  <label>Edit hours<input type="number" step="0.1" bind:value={adjustData.newHours} /></label>
+  <p>Edit {adjustData.member.name}</p>
+  <label>Hours on {adjustData.dayDisplay}<input type="number" step="0.1" bind:value={adjustData.newHours} /></label>
   <button slot="dialog-button" on:click={adjust} disabled={adjustData.newHours == adjustData.prevHours}>Apply</button>
 </Dialog>
 
 <details open={isOwner($mt)}>
   <summary>Members</summary>
   <p>Week of {week.sunday.toLocaleString(undefined, { dateStyle: "long" })}</p>
-  <p class="overflow-wide">
+  <div class="buttons">
     <button on:click={refresh} title="Refresh">&circlearrowright;</button>
     <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
     <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
     <button on:click={() => (week = new Week())}>This week</button>
     <button on:click={() => (week = new Week($mt.team.data.cutoffBegin.toDate()))}>Cutoff begin</button>
     <button on:click={() => (week = new Week($mt.team.data.cutoffEnd.toDate()))}>Cutoff end</button>
-  </p>
-  <div class="overflow-wide">
+  </div>
+  <div class="table-wrap">
     <table>
       <tr>
         <th class="name-col">Name</th>
@@ -114,24 +123,26 @@
           <th class="day-col">{day}</th>
         {/each}
       </tr>
-      {#if $mt.member?.list}
-        {#each $mt.member.list as member (member.id)}
-          {@const hoursData = getHours(member.logs)}
-          <tr>
-            <td class="name-col" class:editable={isOwner($mt)} on:click={() => showEditMember(member)}>
-              {member.name}
+      {#each $mt.member.list as member (member.id)}
+        {@const hoursData = getHours(member.logs)}
+        <tr>
+          <td class="name-col" class:editable={isOwner($mt)} on:click={() => showEditMember(member)}>
+            {member.name}
+          </td>
+          <td class="hours-col">{hoursData.total.toFixed(1)}</td>
+          {#each hoursData.days as hours, i}
+            <td
+              class="day-col"
+              class:editable={isOwner($mt) || $mt.user.id == member.id}
+              on:click={() => showAdjust(member, hours, i)}
+            >
+              {#if hours}
+                {hours.toFixed(1)}
+              {/if}
             </td>
-            <td class="hours-col">{hoursData.total.toFixed(1)}</td>
-            {#each hoursData.days as hours, i}
-              <td class="day-col" class:editable={isOwner($mt) || $mt.user.id == member.id} on:click={() => showAdjust(member, hours, i)}>
-                {#if hours}
-                  {hours.toFixed(1)}
-                {/if}
-              </td>
-            {/each}
-          </tr>
-        {/each}
-      {/if}
+          {/each}
+        </tr>
+      {/each}
     </table>
   </div>
 </details>

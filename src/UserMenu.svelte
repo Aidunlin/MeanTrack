@@ -44,7 +44,8 @@
 </script>
 
 <Dialog bind:open={showEditDialog}>
-  <label>Edit your name<input type="text" bind:value={nameEditValue} /></label>
+  <p>Edit {$mt.member.data.name}</p>
+  <label>Name<input type="text" bind:value={nameEditValue} /></label>
   <button slot="dialog-button" on:click={editName} disabled={nameEditValue == $mt.member.data.name}>Apply</button>
 </Dialog>
 
@@ -58,9 +59,9 @@
       {/if}
     </p>
   {/if}
-  <p class="overflow-wide">
+  <div class="buttons">
     <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
     <button on:click={() => (showEditDialog = true)}>Edit</button>
     <button on:click={logOut}>Log out</button>
-  </p>
+  </div>
 </details>

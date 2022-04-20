@@ -55,4 +55,4 @@
   <label>Team name<input type="text" bind:value={teamNameInput} /></label>
   <button disabled={!teamNameInput.length || !nameInput.length} on:click={create}>Create</button>
 </details>
-<p><button on:click={logOut}>Log out</button></p>
+<div class="buttons"><button on:click={logOut}>Log out</button></div>
