@@ -83,11 +83,10 @@
 <footer>
   <p>
     Made with <a href="https://firebase.google.com/" target="_blank">Firebase</a>
-    | <a href="https://svelte.dev/" target="_blank">Svelte</a>
-    | <a href="https://newcss.net/" target="_blank">new.css</a>
+    and <a href="https://svelte.dev/" target="_blank">Svelte</a>
   </p>
   <p>
     View <a href="https://github.com/Aidunlin/MeanTrack" target="_blank">Repo</a>
-    | <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c" target="_blank">Doc</a>
+    or <a href="https://docs.google.com/document/d/1yPmfHWuSQf4gsOyfTsaVunR9jaGW08NvOWJTsm6861c" target="_blank">Doc</a>
   </p>
 </footer>
