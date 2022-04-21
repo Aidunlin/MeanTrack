@@ -4,14 +4,16 @@
   import Dialog from "./Dialog.svelte";
 
   let showShareIdDialog = false;
-  let showEditDialog = false;
   let showAddLogTypeDialog = false;
   let showLeaveDialog = false;
   let newTypeNameValue = "";
-  let cutoffBeginEditValue = cutoffToString(getLogType($mt).cutoffBegin?.toDate());
-  let cutoffEndEditValue = cutoffToString(getLogType($mt).cutoffEnd?.toDate());
-  let goalEditValue = getLogType($mt).goal;
-  let nameEditValue = $mt.team.data.name;
+  let editTeamData = {
+    cutoffBegin: "",
+    cutoffEnd: "",
+    goal: 0,
+    name: "",
+    show: false,
+  };
 
   function cutoffToString(day: Date) {
     if (!day) return "";
@@ -27,13 +29,23 @@
     return Timestamp.fromDate(date);
   }
 
+  function showEditTeam() {
+    editTeamData = {
+      cutoffBegin: cutoffToString(getLogType($mt).cutoffBegin?.toDate()),
+      cutoffEnd: cutoffToString(getLogType($mt).cutoffEnd?.toDate()),
+      goal: getLogType($mt).goal,
+      name: $mt.team.data.name,
+      show: true,
+    };
+  }
+
   function editTeam() {
-    getLogType($mt).cutoffBegin = stringToCutoff(cutoffBeginEditValue);
-    getLogType($mt).cutoffEnd = stringToCutoff(cutoffEndEditValue);
-    getLogType($mt).goal = goalEditValue;
+    getLogType($mt).cutoffBegin = stringToCutoff(editTeamData.cutoffBegin);
+    getLogType($mt).cutoffEnd = stringToCutoff(editTeamData.cutoffEnd);
+    getLogType($mt).goal = editTeamData.goal;
     $mt.team = $mt.team.update({
       logTypes: $mt.team.data.logTypes,
-      name: nameEditValue,
+      name: editTeamData.name,
     });
   }
 
@@ -52,10 +64,10 @@
   }
 
   function dialogHasChanges() {
-    let cutoffBeginChanged = cutoffBeginEditValue != cutoffToString(getLogType($mt).cutoffBegin?.toDate());
-    let cutoffEndChanged = cutoffEndEditValue != cutoffToString(getLogType($mt).cutoffEnd?.toDate());
-    let goalChanged = goalEditValue != getLogType($mt).goal;
-    let nameChanged = nameEditValue != $mt.team.data.name;
+    let cutoffBeginChanged = editTeamData.cutoffBegin != cutoffToString(getLogType($mt).cutoffBegin?.toDate());
+    let cutoffEndChanged = editTeamData.cutoffEnd != cutoffToString(getLogType($mt).cutoffEnd?.toDate());
+    let goalChanged = editTeamData.goal != getLogType($mt).goal;
+    let nameChanged = editTeamData.name != $mt.team.data.name;
     return cutoffBeginChanged || cutoffEndChanged || goalChanged || nameChanged;
   }
 
@@ -70,26 +82,26 @@
   <label>Share team id<input type="text" value={$mt.team.id} readonly /></label>
 </Dialog>
 
-<Dialog bind:open={showEditDialog}>
+<Dialog bind:open={editTeamData.show}>
   <p>Edit {$mt.team.data.name}</p>
   {#if $mt.chosenLogType}
     <label>
       Log type
-      <select bind:value={$mt.chosenLogType}>
+      <select bind:value={$mt.chosenLogType} on:change={showEditTeam}>
         {#each $mt.team.data.logTypes as logType (logType.name)}
           <option value={logType.name}>{logType.name}</option>
         {/each}
       </select>
     </label>
-    <label>Cutoff begin<input type="date" bind:value={cutoffBeginEditValue} /></label>
-    <label>Cutoff end<input type="date" bind:value={cutoffEndEditValue} /></label>
-    <label>Goal<input type="number" pattern="[0-9]*" bind:value={goalEditValue} /></label>
+    <label>Cutoff begin<input type="date" bind:value={editTeamData.cutoffBegin} /></label>
+    <label>Cutoff end<input type="date" bind:value={editTeamData.cutoffEnd} /></label>
+    <label>Goal<input type="number" pattern="[0-9]*" bind:value={editTeamData.goal} /></label>
   {/if}
-  <label>Name<input type="text" bind:value={nameEditValue} /></label>
+  <label>Name<input type="text" bind:value={editTeamData.name} /></label>
   <span slot="dialog-button">
     <button
       on:click={editTeam}
-      disabled={!(nameEditValue && dialogHasChanges())}
+      disabled={!(editTeamData.name && dialogHasChanges())}
     >
       Apply
     </button>
@@ -98,7 +110,6 @@
 </Dialog>
 
 <Dialog bind:open={showAddLogTypeDialog}>
-  <p>Edit {$mt.team.data.name}</p>
   <label>New log type<input type="text" bind:value={newTypeNameValue} /></label>
   <button
     slot="dialog-button"
@@ -137,7 +148,7 @@
     <div class="buttons">
       <button on:click={() => (showShareIdDialog = true)}>Share id</button>
       {#if $mt.user.id == $mt.team.data.ownerId}
-        <button on:click={() => (showEditDialog = true)}>Edit...</button>
+        <button on:click={showEditTeam}>Edit</button>
       {/if}
       <button on:click={() => (showLeaveDialog = true)}>Leave</button>
     </div>

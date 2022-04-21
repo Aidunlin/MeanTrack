@@ -61,7 +61,7 @@
   {/if}
   <div class="buttons">
     <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
-    <button on:click={() => (showEditDialog = true)}>Edit...</button>
+    <button on:click={() => (showEditDialog = true)}>Edit</button>
     <button on:click={logOut}>Log out</button>
   </div>
 </details>

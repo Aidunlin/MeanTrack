@@ -12,18 +12,6 @@
   --accent-tx: #ffffff;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --text-1: #000000;
-    --text-2: #1a1a1a;
-    --back-1: #ffffff;
-    --back-2: #f6f8fa;
-    --back-3: #e5e7eb;
-    --accent-1: #0070f3;
-    --accent-2: #0366d6;
-  }
-}
-
 ::selection {
   background: var(--accent-1);
   color: var(--accent-tx);
@@ -146,6 +134,10 @@ input, select {
   padding: 6px 12px;
 }
 
+:is(select, .editable) {
+  user-select: none;
+}
+
 option {
   background: var(--back-2);
 }
@@ -223,10 +215,6 @@ table * {
 .buttons span {
   display: flex;
   gap: 0.5rem;
-}
-
-.editable {
-  user-select: none;
 }
 
 .dialog {

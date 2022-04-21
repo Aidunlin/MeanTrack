@@ -73,7 +73,7 @@
   async function adjust() {
     let day = week.day(adjustData.dayIndex);
     if (isNaN(adjustData.newHours) || !isFinite(adjustData.newHours)) return;
-    let existingLog = adjustData.member.logs.find((log) => sameDay(log.start.toDate(), day));
+    let existingLog = adjustData.member.logs.find((log) => log.name == $mt.chosenLogType && sameDay(log.start.toDate(), day));
     if (existingLog) existingLog.hours = adjustData.newHours;
     else adjustData.member.logs.push({ hours: adjustData.newHours, start: Timestamp.fromDate(day), name: $mt.chosenLogType });
     $mt.member = $mt.member.update({ logs: adjustData.member.logs }, adjustData.member.id);
@@ -81,6 +81,7 @@
   }
 
   $: {
+    $mt.chosenLogType = $mt.chosenLogType;
     $mt.member = $mt.member;
     dayNames = [...Array(7).keys()].map((dayIndex) => {
       let day = new Date(week.sunday.getFullYear(), week.sunday.getMonth(), week.sunday.getDate() + dayIndex);
