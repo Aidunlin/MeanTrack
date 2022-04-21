@@ -6,9 +6,10 @@
   --back-1: #000000;
   --back-2: #111111;
   --back-3: #222222;
-  --link-1: #3291ff;
-  --link-2: #0070f3;
-  --link-tx: #ffffff;
+  --back-hover: rgba(127, 127, 127, 0.07);
+  --accent-1: #3291ff;
+  --accent-2: #0070f3;
+  --accent-tx: #ffffff;
 }
 
 @media (prefers-color-scheme: light) {
@@ -18,14 +19,14 @@
     --back-1: #ffffff;
     --back-2: #f6f8fa;
     --back-3: #e5e7eb;
-    --link-1: #0070f3;
-    --link-2: #0366d6;
+    --accent-1: #0070f3;
+    --accent-2: #0366d6;
   }
 }
 
 ::selection {
-  background-color: var(--link-1);
-  color: var(--link-tx);
+  background: var(--accent-1);
+  color: var(--accent-tx);
 }
 
 * {
@@ -38,6 +39,10 @@
 
 :is(details, input, p) {
   margin-bottom: 1rem;
+}
+
+:is(summary, .editable, input, select):hover {
+  background: var(--back-hover);
 }
 
 body {
@@ -56,6 +61,7 @@ body {
 }
 
 header {
+  border-bottom: 1px solid var(--back-3);
   margin: -1.5rem calc(0px - (50vw - 50%)) 1.5rem;
 }
 
@@ -68,12 +74,12 @@ main {
 }
 
 footer {
+  border-top: 1px solid var(--back-3);
   margin: 1.5rem calc(0px - (50vw - 50%)) -1.5rem;
 }
 
 :is(header, footer) {
   background: var(--back-2);
-  border-top: 1px solid var(--back-3);
   padding: 1.5rem calc(50vw - 50%);
 }
 
@@ -90,12 +96,12 @@ h1 {
 }
 
 a {
-  color: var(--link-1);
+  color: var(--accent-1);
   text-decoration: none;
 }
 
 a:hover {
-  color: var(--link-2);
+  color: var(--accent-2);
 }
 
 label,
@@ -105,12 +111,11 @@ label * {
 }
 
 button {
-  background: var(--link-1);
+  background: var(--accent-1);
   border: 0;
   border-radius: 4px;
   box-sizing: border-box;
-  cursor: pointer;
-  color: var(--link-tx);
+  color: var(--accent-tx);
   display: inline-block;
   font-size: 1rem;
   padding: 6px 12px;
@@ -121,13 +126,32 @@ button {
 }
 
 button[disabled] {
-  cursor: default;
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 button:hover {
-  background: var(--link-2);
+  background: var(--accent-2);
+}
+
+input, select {
+  background: var(--back-2);
+  border: 1px solid var(--back-3);
+  border-radius: 4px;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: var(--text-2);
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  padding: 6px 12px;
+}
+
+option {
+  background: var(--back-2);
+}
+
+input[type="date"] {
+  cursor: text;
 }
 
 input[type="checkbox"] {
@@ -143,7 +167,6 @@ details {
 }
 
 summary {
-  cursor: pointer;
   font-weight: bold;
   margin-left: -1rem;
   margin-right: -1rem;
@@ -182,17 +205,6 @@ table * {
   padding: 0.5rem;
 }
 
-input {
-  color: var(--text-2);
-  background: var(--back-2);
-  border: 1px solid var(--back-3);
-  border-radius: 4px;
-  box-shadow: none;
-  box-sizing: border-box;
-  margin-bottom: 0.5rem;
-  padding: 6px 12px;
-}
-
 .red {
   background: hsl(0, 100%, 60%);
 }
@@ -202,13 +214,12 @@ input {
 }
 
 .buttons {
-  display: flex;
-  gap: 0.5rem;
   margin-bottom: 1rem;
   overflow-x: auto;
   white-space: nowrap;
 }
 
+.buttons,
 .buttons span {
   display: flex;
   gap: 0.5rem;
@@ -216,17 +227,6 @@ input {
 
 .editable {
   user-select: none;
-}
-
-.editable:hover {
-  background: rgba(127, 127, 127, 0.1);
-  cursor: pointer;
-}
-
-.table-wrap {
-  max-height: 400px;
-  margin-bottom: 1rem;
-  overflow: auto;
 }
 
 .dialog {
@@ -265,6 +265,12 @@ input {
   width: 100%;
 }
 
+.table-wrap {
+  max-height: 400px;
+  margin-bottom: 1rem;
+  overflow: auto;
+}
+
 .name-col {
   text-align: left;
   width: 8em;
@@ -276,12 +282,4 @@ input {
 
 .day-col {
   width: 3em;
-}
-
-.day-col:not(:last-of-type) {
-  border-right: none;
-}
-
-.day-col:not(:first-of-type) {
-  border-left: none;
 }

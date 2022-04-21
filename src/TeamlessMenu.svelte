@@ -10,6 +10,7 @@
     $mt.loaded = false;
     $mt.team = new SingleFS($mt.firestore, "teams", teamIdInput);
     if (await $mt.team.getData()) {
+      $mt.chosenLogType = $mt.team.data.logTypes[0]?.name ?? "";
       $mt.unverified = new ListFS($mt.team.document, "unverifieds");
       $mt.user = $mt.user.set({ teamId: $mt.team.id });
       if (isOwner($mt)) {
@@ -29,13 +30,7 @@
   async function create() {
     $mt.loaded = false;
     $mt.team = new SingleFS($mt.firestore, "teams", ".");
-    $mt.team = $mt.team.set({
-      cutoffBegin: new Timestamp(0, 0),
-      cutoffEnd: Timestamp.now(),
-      goal: 0,
-      name: teamNameInput,
-      ownerId: $mt.user.id,
-    });
+    $mt.team = $mt.team.set({ logTypes: [], name: teamNameInput, ownerId: $mt.user.id });
     $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
     $mt.member = $mt.member.set({ lastAction: Timestamp.now(), logs: [], name: nameInput, tracking: false });
     $mt.unverified = new ListFS($mt.team.document, "unverifieds");
@@ -44,15 +39,12 @@
   }
 </script>
 
-<label>Your name<input type="text" bind:value={nameInput} /></label>
 <details open>
-  <summary>Join a team</summary>
+  <summary>Get started</summary>
+  <div class="buttons"><button on:click={logOut}>Log out</button></div>
+  <label>Your name<input type="text" bind:value={nameInput} /></label>
   <label>Team id<input type="text" bind:value={teamIdInput} /></label>
-  <button disabled={!teamIdInput.length || !nameInput.length} on:click={join}>Join</button>
-</details>
-<details>
-  <summary>Create a team</summary>
+  <div class="buttons"><button disabled={!teamIdInput.length || !nameInput.length} on:click={join}>Join</button></div>
   <label>Team name<input type="text" bind:value={teamNameInput} /></label>
-  <button disabled={!teamNameInput.length || !nameInput.length} on:click={create}>Create</button>
+  <div class="buttons"><button disabled={!teamNameInput.length || !nameInput.length} on:click={create}>Create</button></div>
 </details>
-<div class="buttons"><button on:click={logOut}>Log out</button></div>

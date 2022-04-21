@@ -18,6 +18,7 @@
   async function loadTeam() {
     $mt.team = new SingleFS($mt.firestore, "teams", $mt.user.data.teamId);
     if (await $mt.team.getData()) {
+      $mt.chosenLogType = $mt.team.data.logTypes[0]?.name ?? "";
       $mt.unverified = new ListFS($mt.team.document, "unverifieds", $mt.user.id);
       await $mt.unverified.getList();
       $mt.member = new ListFS($mt.team.document, "members", $mt.user.id);
@@ -73,7 +74,10 @@
         <TeamlessMenu />
       {/if}
     {:else}
-      <div class="buttons"><button on:click={logIn}>Log in with Google</button></div>
+      <details open>
+        <summary>Log in</summary>
+        <div class="buttons"><button on:click={logIn}>Log in with Google</button></div>
+      </details>
     {/if}
   {:else}
     <p>{message}</p>

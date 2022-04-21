@@ -16,7 +16,7 @@
       });
       let newHours = hoursBetween(now, $mt.member.data.lastAction);
       if (existingLog) existingLog.hours += newHours;
-      else $mt.member.data.logs.push({ hours: newHours, start: $mt.member.data.lastAction });
+      else $mt.member.data.logs.push({ hours: newHours, start: $mt.member.data.lastAction, name: $mt.chosenLogType ?? "" });
     }
     $mt.member = $mt.member.update({
       lastAction: now,
@@ -28,7 +28,7 @@
   function getHours() {
     let hours = 0;
     $mt.member.data.logs.forEach((log) => {
-      if (withinCutoff($mt, log)) hours += log.hours;
+      if (withinCutoff($mt, log) && log.name == $mt.chosenLogType) hours += log.hours;
     });
     return hours;
   }
@@ -61,7 +61,7 @@
   {/if}
   <div class="buttons">
     <button on:click={toggleTracking}>{$mt.member.data.tracking ? "Stop" : "Start"} tracking</button>
-    <button on:click={() => (showEditDialog = true)}>Edit</button>
+    <button on:click={() => (showEditDialog = true)}>Edit...</button>
     <button on:click={logOut}>Log out</button>
   </div>
 </details>

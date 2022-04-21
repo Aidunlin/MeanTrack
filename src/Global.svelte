@@ -34,15 +34,27 @@
   }
 
   export function withinCutoff(mt: MT, log: Log) {
-    if (!mt.team.data.cutoffBegin || !mt.team.data.cutoffEnd) return true;
-    let cutoffBegin = mt.team.data.cutoffBegin.toMillis();
-    let cutoffEnd = mt.team.data.cutoffEnd.toMillis();
+    let logType = mt.team.data.logTypes.find(type => type.name == log.name);
+    if (!logType || !logType.cutoffBegin || !logType.cutoffEnd) return true;
+    let cutoffBegin = logType.cutoffBegin.toMillis();
+    let cutoffEnd = logType.cutoffEnd.toMillis();
     let logMillis = log.start.toMillis();
     return logMillis >= cutoffBegin && logMillis < cutoffEnd;
   }
 
   export function isOwner(mt: MT) {
     return mt.user.id == mt.team.data.ownerId;
+  }
+
+  export function getLogType(mt: MT) {
+    return (
+      mt.team.data.logTypes.find((type) => type.name == mt.chosenLogType) ?? {
+        cutoffBegin: null,
+        cutoffEnd: null,
+        goal: 0,
+        name: "",
+      }
+    );
   }
 
   export class Week {
@@ -75,6 +87,14 @@
   export interface Log {
     hours: number;
     start: Timestamp;
+    name: string;
+  }
+
+  export interface LogType {
+    cutoffBegin: Timestamp;
+    cutoffEnd: Timestamp;
+    goal: number;
+    name: string;
   }
 
   export interface UserData {
@@ -82,9 +102,7 @@
   }
 
   export interface TeamData {
-    cutoffBegin: Timestamp;
-    cutoffEnd: Timestamp;
-    goal: number;
+    logTypes: LogType[];
     name: string;
     ownerId: string;
   }
@@ -192,6 +210,7 @@
     team: SingleFS<TeamData>;
     member: ListFS<MemberData>;
     unverified: ListFS<UnverifiedData>;
+    chosenLogType: string;
   }
 
   export const mt = writable<MT>({
@@ -202,5 +221,6 @@
     team: null,
     member: null,
     unverified: null,
+    chosenLogType: "",
   });
 </script>

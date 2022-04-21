@@ -1,6 +1,6 @@
 <script lang="ts">
   import { deleteDoc, doc, Timestamp } from "firebase/firestore/lite";
-  import { isOwner, Log, MemberData, mt, sameDay, Week, withinCutoff } from "./Global.svelte";
+  import { getLogType, isOwner, Log, MemberData, mt, sameDay, Week, withinCutoff } from "./Global.svelte";
   import Dialog from "./Dialog.svelte";
 
   let dayNames: string[] = [];
@@ -24,9 +24,11 @@
   function getHours(logs: Log[]) {
     let hours = { total: 0, days: [0, 0, 0, 0, 0, 0, 0] };
     logs.forEach((log) => {
-      if (withinCutoff($mt, log)) hours.total += log.hours;
       let logDate = log.start.toDate();
-      if (week.contains(logDate)) hours.days[logDate.getDay()] += log.hours;
+      if (log.name == $mt.chosenLogType) {
+        if (withinCutoff($mt, log) && log.name == $mt.chosenLogType) hours.total += log.hours;
+        if (week.contains(logDate) && log.name == $mt.chosenLogType) hours.days[logDate.getDay()] += log.hours;
+      }
     });
     return hours;
   }
@@ -54,7 +56,8 @@
     editMemberData = { member: null, newName: "", show: false };
   }
 
-  function showAdjust(member: MemberData & { id: string }, prevHours: number, dayIndex: number) {
+  function showAdjust(e: MouseEvent, member: MemberData & { id: string }, prevHours: number, dayIndex: number) {
+    e.stopPropagation();
     if (!isOwner($mt) && $mt.user.id != member.id) return;
     let fixedPrevHours = parseFloat(prevHours.toFixed(1));
     adjustData = {
@@ -72,7 +75,7 @@
     if (isNaN(adjustData.newHours) || !isFinite(adjustData.newHours)) return;
     let existingLog = adjustData.member.logs.find((log) => sameDay(log.start.toDate(), day));
     if (existingLog) existingLog.hours = adjustData.newHours;
-    else adjustData.member.logs.push({ hours: adjustData.newHours, start: Timestamp.fromDate(day) });
+    else adjustData.member.logs.push({ hours: adjustData.newHours, start: Timestamp.fromDate(day), name: $mt.chosenLogType });
     $mt.member = $mt.member.update({ logs: adjustData.member.logs }, adjustData.member.id);
     adjustData.prevHours = adjustData.newHours;
   }
@@ -111,8 +114,12 @@
     <button on:click={() => (week = week.previous)} title="Previous week">&lt;</button>
     <button on:click={() => (week = week.next)} title="Next week">&gt;</button>
     <button on:click={() => (week = new Week())}>This week</button>
-    <button on:click={() => (week = new Week($mt.team.data.cutoffBegin.toDate()))}>Cutoff begin</button>
-    <button on:click={() => (week = new Week($mt.team.data.cutoffEnd.toDate()))}>Cutoff end</button>
+    {#if getLogType($mt).cutoffBegin}
+      <button on:click={() => (week = new Week(getLogType($mt).cutoffBegin.toDate()))}>Cutoff begin</button>
+    {/if}
+    {#if getLogType($mt).cutoffEnd}
+      <button on:click={() => (week = new Week(getLogType($mt).cutoffEnd.toDate()))}>Cutoff end</button>
+    {/if}
   </div>
   <div class="table-wrap">
     <table>
@@ -125,16 +132,14 @@
       </tr>
       {#each $mt.member.list as member (member.id)}
         {@const hoursData = getHours(member.logs)}
-        <tr>
-          <td class="name-col" class:editable={isOwner($mt)} on:click={() => showEditMember(member)}>
-            {member.name}
-          </td>
+        <tr class:editable={isOwner($mt)} on:click={() => showEditMember(member)}>
+          <td class="name-col">{member.name}</td>
           <td class="hours-col">{hoursData.total.toFixed(1)}</td>
           {#each hoursData.days as hours, i}
             <td
               class="day-col"
               class:editable={isOwner($mt) || $mt.user.id == member.id}
-              on:click={() => showAdjust(member, hours, i)}
+              on:click={(e) => showAdjust(e, member, hours, i)}
             >
               {#if hours}
                 {hours.toFixed(1)}
